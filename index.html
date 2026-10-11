@@ -1,0 +1,769 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>Torneo VGM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Chakra+Petch:wght@400;500;600;700&family=Silkscreen&display=swap">
+<style>
+/* Layout: fighting-game "VS" stage — two challenger cards with embedded YouTube players facing off, vote bar under each, host controls under the stage. Single deliberate dark arcade look. */
+:root{
+  --bg:#13102a; --panel:#1d1840; --panel-2:#262054; --line:#3b3373;
+  --fg:#efeaff; --muted:#a59ecb;
+  --p1:#ff5d62; --p1-ink:#2a0608; --p2:#3db8ff; --p2-ink:#04192a;
+  --gold:#ffc847; --gold-ink:#2b1d00; --ok:#5be39b;
+  --display:"Bungee","Impact","Arial Black",sans-serif;
+  --body:"Chakra Petch","Segoe UI",system-ui,sans-serif;
+  --pixel:"Silkscreen","Courier New",monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--fg)}
+body{font-family:var(--body);font-size:15px;line-height:1.45;min-height:100vh;
+  background-image:repeating-linear-gradient(0deg,rgba(255,255,255,.018) 0 1px,transparent 1px 3px),radial-gradient(1200px 500px at 50% -10%,#2b2163 0%,transparent 70%);}
+.wrap{max-width:1400px;margin:0 auto;padding-inline:16px;padding-block:12px 48px}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+[hidden]{display:none!important}
+
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;padding-block:4px 12px;border-bottom:1px solid var(--line)}
+.brand{font-family:var(--display);font-size:22px;line-height:1;display:flex;align-items:center;gap:10px;margin-right:auto}
+.brand .dot{display:inline-flex;gap:3px}
+.brand .dot i{width:9px;height:9px;display:block;background:var(--p1)}
+.brand .dot i+i{background:var(--p2)}
+.chip{font-family:var(--pixel);font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:5px 9px;border:1px solid var(--line);background:var(--panel);color:var(--muted);white-space:nowrap}
+.chip b{color:var(--fg);font-weight:400}
+.chip.live b{color:var(--ok)}
+.chip.code{cursor:pointer;color:var(--gold);border-color:var(--gold)}
+.chip.code b{color:var(--gold);letter-spacing:.2em}
+
+.tabs{display:flex;gap:4px;margin-block:12px 16px;overflow-x:auto}
+.tab{font-family:var(--pixel);font-size:12px;letter-spacing:.06em;text-transform:uppercase;padding:9px 14px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer;white-space:nowrap}
+.tab[aria-selected="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+
+.notice{border:1px dashed var(--line);padding:12px 14px;color:var(--muted);margin-bottom:14px;font-size:14px}
+.notice strong{color:var(--fg)}
+
+/* inicio */
+.home{display:grid;gap:22px;max-width:760px;margin-top:10px}
+.home h1{font-family:var(--display);font-size:clamp(30px,6vw,56px);line-height:1;margin:0;text-wrap:balance}
+.home h1 span{color:var(--gold);text-shadow:3px 3px 0 var(--p1),-3px -3px 0 var(--p2)}
+.home p{margin:0;color:var(--muted);max-width:62ch}
+.choices{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.choice{display:grid;gap:12px;padding:16px;border:1px solid var(--line);background:var(--panel);align-content:start}
+.choice h2{font-family:var(--display);font-weight:400;font-size:20px;margin:0}
+.choice p{font-size:14px}
+.field{display:grid;gap:6px}
+.field > span{font-family:var(--pixel);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.inp{width:100%;background:var(--bg);border:1px solid var(--line);padding:10px 12px}
+.inp.code{text-transform:uppercase;letter-spacing:.3em;font-family:var(--pixel);font-size:18px}
+
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{padding:10px 14px;border:1px solid var(--line);background:var(--panel);cursor:pointer;font-weight:600;font-variant-numeric:tabular-nums}
+.seg button[aria-pressed="true"]{background:var(--gold);color:var(--gold-ink);border-color:var(--gold)}
+.seg button:disabled{opacity:.35;cursor:not-allowed}
+.seg small{display:block;font-weight:400;font-size:12px;opacity:.8}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 18px;border:1px solid var(--line);background:var(--panel-2);cursor:pointer;font-weight:700;letter-spacing:.02em;text-decoration:none}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--gold);color:var(--gold-ink);border-color:var(--gold);font-family:var(--display);font-weight:400;font-size:17px;padding:12px 22px}
+.btn.danger{background:transparent;color:var(--p1);border-color:color-mix(in srgb,var(--p1) 50%,var(--line))}
+.btn.ghost{background:transparent}
+.btn.sm{padding:6px 10px;font-size:13px;font-weight:600}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+
+.lobby{display:grid;gap:18px;max-width:700px}
+.lobby h1{font-family:var(--display);font-size:clamp(24px,4.5vw,38px);line-height:1.05;margin:0}
+.lobby p{margin:0;color:var(--muted);max-width:62ch}
+.invite{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:14px;border:1px solid var(--gold);background:color-mix(in srgb,var(--gold) 8%,var(--panel))}
+.invite .big{font-family:var(--pixel);font-size:26px;letter-spacing:.3em;color:var(--gold)}
+.invite .lnk{font-size:13px;color:var(--muted);overflow-wrap:anywhere;flex:1 1 220px;min-width:0}
+
+/* escenario */
+.meta{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:center;gap:8px 14px;margin-bottom:12px;text-align:center}
+.meta .round{font-family:var(--display);font-size:clamp(20px,3.6vw,30px);line-height:1}
+.meta .count{font-family:var(--pixel);font-size:12px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding:4px 10px;border:1px solid var(--line);background:var(--panel)}
+.meta .count b{color:var(--p1);font-weight:400}
+
+.vs{position:relative;display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.vs-mark{position:absolute;left:50%;top:calc(50% - 50px);transform:translate(-50%,-50%) skewX(-8deg);z-index:2;font-family:var(--display);font-size:clamp(34px,5vw,64px);line-height:1;color:var(--gold);text-shadow:3px 3px 0 var(--p1),-3px -3px 0 var(--p2);pointer-events:none}
+.card{position:relative;display:flex;flex-direction:column;gap:10px;min-width:0;transition:opacity .2s}
+.frame{position:relative;aspect-ratio:16/9;width:100%;background:#000;border:4px solid var(--line);overflow:hidden}
+.card.a .frame{border-color:var(--p1)}
+.card.b .frame{border-color:var(--p2)}
+.frame > div,.frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.frame .fallback{display:grid;place-items:center;align-content:center;gap:10px;padding:16px;text-align:center;color:var(--muted);font-size:14px}
+.label{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;padding:8px 14px;transform:skewX(-8deg);width:fit-content;max-width:100%}
+.label > *{transform:skewX(8deg)}
+.card.a .label{background:var(--p1);color:var(--p1-ink)}
+.card.b .label{background:var(--p2);color:var(--p2-ink);margin-left:auto}
+.label .song{font-family:var(--display);font-weight:400;font-size:clamp(16px,2.2vw,24px);line-height:1.1;margin:0;overflow-wrap:anywhere}
+.label .game{font-weight:700;font-size:14px;opacity:.85;overflow-wrap:anywhere}
+.vote{width:100%;font-family:var(--display);font-weight:400;font-size:18px;cursor:pointer;padding:12px 14px;border:0;color:#fff;letter-spacing:.04em}
+.card.a .vote{background:color-mix(in srgb,var(--p1) 75%,#000)}
+.card.b .vote{background:color-mix(in srgb,var(--p2) 70%,#000)}
+.card.a .vote[aria-pressed="true"]{background:var(--p1);color:var(--p1-ink)}
+.card.b .vote[aria-pressed="true"]{background:var(--p2);color:var(--p2-ink)}
+.vote:disabled{opacity:.4;cursor:not-allowed}
+.card.picked .frame{box-shadow:0 0 0 4px var(--gold)}
+.card.lose{opacity:.4}
+.card .crown{position:absolute;top:-12px;right:12px;z-index:3;font-family:var(--pixel);font-size:12px;letter-spacing:.08em;background:var(--gold);color:var(--gold-ink);padding:5px 10px;text-transform:uppercase}
+.score{font-family:var(--display);font-size:30px;line-height:1;font-variant-numeric:tabular-nums;text-align:center}
+.card.a .score{color:var(--p1)} .card.b .score{color:var(--p2)}
+.score small{font-family:var(--pixel);font-size:11px;color:var(--muted);letter-spacing:.06em;margin-left:6px}
+
+.meter{display:flex;height:12px;margin-top:14px;border:1px solid var(--line);background:var(--panel)}
+.meter i{display:block;height:100%;transition:width .5s}
+.meter .ma{background:var(--p1)} .meter .mb{background:var(--p2);margin-left:auto}
+.voters{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:10px;min-height:28px}
+.voters .lbl{font-family:var(--pixel);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-right:4px}
+.pill{font-size:13px;padding:3px 9px;border:1px solid var(--line);background:var(--panel);display:inline-flex;align-items:center;gap:6px}
+.pill i{width:7px;height:7px;display:block;background:var(--muted)}
+.pill.voted i{background:var(--ok)} .pill.sa i{background:var(--p1)} .pill.sb i{background:var(--p2)}
+.pill.off{opacity:.5}
+
+.host{margin-top:18px;padding:14px;border:1px solid var(--line);background:color-mix(in srgb,var(--panel) 70%,transparent);display:grid;gap:12px}
+.host-h{font-family:var(--pixel);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.manual{display:flex;flex-wrap:wrap;gap:14px;align-items:center;font-size:14px;color:var(--muted)}
+.manual .grp{display:inline-flex;align-items:center;gap:6px}
+.manual .grp b{font-variant-numeric:tabular-nums;color:var(--fg);min-width:2ch;text-align:center}
+.sq{width:32px;height:32px;border:1px solid var(--line);background:var(--panel-2);cursor:pointer;font-weight:700}
+.sq.a{color:var(--p1)} .sq.b{color:var(--p2)}
+.confirm{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:14px}
+
+/* bracket */
+.rtabs{display:flex;gap:4px;overflow-x:auto;margin-bottom:14px;padding-bottom:4px}
+.rtabs button{font-family:var(--pixel);font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:7px 10px;border:1px solid var(--line);background:var(--panel);color:var(--muted);cursor:pointer;white-space:nowrap}
+.rtabs button[aria-pressed="true"]{border-color:var(--gold);color:var(--gold)}
+.matches{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:10px}
+.m{border:1px solid var(--line);background:var(--panel);display:grid;font-size:14px}
+.m.now{border-color:var(--gold)}
+.m .mh{display:flex;justify-content:space-between;font-family:var(--pixel);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:6px 10px 0}
+.m .mh .live{color:var(--gold)}
+.m .ln{display:grid;grid-template-columns:4px 1fr auto;gap:8px;align-items:center;padding:6px 10px 6px 0}
+.m .ln > i{height:100%;min-height:18px}
+.m .ln.a > i{background:var(--p1)} .m .ln.b > i{background:var(--p2)}
+.m .ln .t{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.m .ln .t em{font-style:normal;color:var(--muted)}
+.m .ln .n{font-variant-numeric:tabular-nums;font-weight:700}
+.m .ln.w .t{font-weight:700}
+.m .ln.l .t{color:var(--muted);text-decoration:line-through}
+.m .ln.tbd .t{color:var(--muted);font-style:italic}
+
+/* campeón */
+.champ{display:grid;gap:16px;justify-items:center;text-align:center}
+.champ .eyebrow{font-family:var(--pixel);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold)}
+.champ h1{font-family:var(--display);font-size:clamp(32px,7vw,68px);line-height:.98;margin:0;text-wrap:balance;color:var(--gold);text-shadow:4px 4px 0 var(--p1),-4px -4px 0 var(--p2)}
+.champ .g{font-size:18px;font-weight:600;color:var(--muted)}
+.champ .frame{max-width:720px;border-color:var(--gold)}
+.path{width:100%;max-width:720px;border-collapse:collapse;font-size:14px;text-align:left}
+.path td,.path th{padding:8px 10px;border-bottom:1px solid var(--line)}
+.path th{font-family:var(--pixel);font-size:11px;font-weight:400;letter-spacing:.06em;color:var(--muted);text-transform:uppercase}
+.path td.n{font-variant-numeric:tabular-nums;white-space:nowrap;text-align:right}
+.tbl{overflow-x:auto;width:100%;display:flex;justify-content:center}
+
+/* canciones */
+.songs{display:grid;gap:16px}
+.songs h2{font-family:var(--display);font-weight:400;font-size:20px;margin:0}
+textarea#lib{width:100%;min-height:420px;background:var(--panel);border:1px solid var(--line);padding:12px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;line-height:1.55;resize:vertical}
+.hint{font-size:13px;color:var(--muted);max-width:80ch;margin:0}
+.hint code{background:var(--panel);padding:1px 5px;border:1px solid var(--line)}
+.songlist{columns:2 320px;column-gap:24px;margin:0;padding-left:2.6em;font-size:14px}
+.songlist li{break-inside:avoid;padding:2px 0}
+.songlist .g{color:var(--muted)}
+
+.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:9px 14px;font-weight:600;font-size:14px;z-index:9;max-width:calc(100% - 32px)}
+
+@media (max-width:760px){
+  .vs{grid-template-columns:1fr;gap:12px}
+  .vs-mark{position:static;transform:skewX(-8deg);justify-self:center;font-size:36px;order:0}
+  .card.b{order:1}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><span class="dot"><i></i><i></i></span>Torneo VGM</div>
+    <span class="chip" id="roundChip" hidden></span>
+    <span class="chip code" id="codeChip" title="Copiar enlace de invitación" hidden></span>
+    <span class="chip" id="netChip" hidden></span>
+  </header>
+  <nav class="tabs" role="tablist" id="tabs" hidden>
+    <button class="tab" role="tab" data-tab="duel" aria-selected="true">Duelo</button>
+    <button class="tab" role="tab" data-tab="bracket" aria-selected="false">Bracket</button>
+    <button class="tab" role="tab" data-tab="songs" aria-selected="false">Canciones</button>
+  </nav>
+  <main id="view"></main>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script>
+(() => {
+"use strict";
+
+/* ---------- canciones por defecto: [juego, canción, [vídeos de YouTube]] ---------- */
+const DEFAULT_SONGS = [["The Legend of Zelda: Ocarina of Time","Gerudo Valley",["0hEYvdMoF2g","mxV7v26eKHA","kevbJUmaBOA"]],["The Legend of Zelda: Ocarina of Time","Song of Storms",["IeP0wZhbaz4","t2g6QiWuzr4"]],["The Legend of Zelda: Ocarina of Time","Lost Woods (Saria's Song)",["V9so9y-8Dgk","1gflP-javf8"]],["The Legend of Zelda: Majora's Mask","Clock Town",["bjBvktEJ3fY","bwz9-4kRS7Q","MnC0XUJ_Uqo"]],["The Legend of Zelda: The Wind Waker","Dragon Roost Island",["SXGGvsHq6iA","1PHvrL1xeeM","QtcgZGp3FGs"]],["The Legend of Zelda: Twilight Princess","Hyrule Field",["7xf3b-dETYw","t6JgG__XbRA","5yLLHv3lL7Q"]],["The Legend of Zelda: Skyward Sword","Ballad of the Goddess",["F-WToBQYZ_A","VtalAmd__y4","8kN1IULIq-M"]],["The Legend of Zelda: Breath of the Wild","Main Theme",["_PWgn7yX9R0","6BZiAX8WmyY","YqDrv5NX4WI"]],["The Legend of Zelda: Tears of the Kingdom","Main Theme",["2Z7d8jE3SYM","43dAgLzyge0","fcLKaNLN5Xg"]],["Super Mario Bros.","Overworld Theme",["iy3qq7zc4EY","VCLkIP0nSBk"]],["Super Mario World","Overworld Theme",["tAaGKo4XVvM","-HdHba9kIpE","NijZAy01EbQ"]],["Super Mario 64","Bob-omb Battlefield",["bmP3UHXYi28","BCD3PKRyspE","gXgnYK2C8xI"]],["Super Mario 64","Dire, Dire Docks",["Zqa2mgjbOIM","CH97oY2pZpg","KHitN2BCbfQ"]],["Super Mario Sunshine","Delfino Plaza",["KYdRWC6MCgM","ds6I5sUBGtw","mKl-jqYxZBg"]],["Super Mario Galaxy","Gusty Garden Galaxy",["1bvDHAUv2ak","JyUcqRMGWT4","r32skRXZgaQ"]],["Super Mario Galaxy","Comet Observatory",["qns5aYc7Ozw","9lok6o2Tsjk","i46rO_2tM2w"]],["Super Mario Odyssey","Jump Up, Super Star!",["gaW-hZUyhZc","e9r5hx47kxM","T8mBVZ1-4vk"]],["Super Mario RPG","Forest Maze",["vkailb3xcTI","3TeQ7jFDwF0","tWiXEoSaXLY"]],["Mario Kart 64","Rainbow Road",["K5xdue7GFcc","jbP4Ska6anw","32t6QdatHnk"]],["Mario Kart Wii","Coconut Mall",["bsf1RaKMRMk","-f0l07VwqMo","U-Qm8sBfcsg"]],["Mario Kart 8","Rainbow Road",["ksDFjM_5r_s","WriO4Erm66Y","sa97HaPejmk"]],["Luigi's Mansion","Main Theme",["nrYC6Ww8shc","wuvEKAbRaJU","S9MmtSnXbyQ"]],["Yoshi's Island","Flower Garden",["vDVmBfqo4eQ","w3498O0ajnU","SLJ4q3WZqP4"]],["Donkey Kong Country","DK Island Swing",["HG8YrDF6cDk","UvsDuEFyijY","p-xLui_xwlU"]],["Donkey Kong Country","Aquatic Ambiance",["1XM8ReW9NvA","gkCcvoJ09gU","-aKq0EWsFig"]],["Donkey Kong Country","Gangplank Galleon",["T0H_gtLBeFo","r5aeisPAzM4","yMBFdtRbFD0"]],["Donkey Kong Country 2","Stickerbrush Symphony",["Oy5mdV79dww","kLQ43dzBjZI","CaMcOo-k23U"]],["Sonic the Hedgehog","Green Hill Zone",["6QVMbvLZ5Zg","lGF2gQjuDcA"]],["Sonic the Hedgehog 2","Chemical Plant Zone",["-LYB7iLZNWE","SrCgjGnlQRQ","RCcJnffie48"]],["Sonic CD","Stardust Speedway (JP)",["6Y2GSt7VVgc","wY8f_xee4g0"]],["Sonic Adventure","Open Your Heart",["uEzXFuYN89k","Av1R21v8ye8","JsL-5R76jFk"]],["Sonic Adventure 2","Escape from the City",["5WcyVvWZJU4","XRy1iCG4qJI","oElci37-1F8"]],["Sonic Adventure 2","Live and Learn",["sefGW__p6WE","3gPBmDptqlQ","CN5p43Kx3hA"]],["Sonic the Hedgehog (2006)","His World",["hOju2ThS--M","VQBrGi3TF1I","cFqcgxQDDuI"]],["Pokémon Rojo/Azul","Pallet Town",["cOWRNLaCMJg","ZzSuS8Zciss","izMEOclMT-U"]],["Pokémon Rojo/Azul","Lavender Town",["DgQbT_tCpsU","-OpleI7Yef8","x7oGlS-_HGE"]],["Pokémon Rojo/Azul","Battle! (Wild Pokémon)",["gqjjHvz38PQ","NrS523dOHU4","LgK2f47q8cU"]],["Pokémon Oro/Plata","Goldenrod City",["15g4OOvOQwU","1aY9ZACCBbw","cDKy1JBkH0E"]],["Pokémon Diamante/Perla","Battle! (Champion Cynthia)",["eMuGmldMoSU","-Czjblx40EE","TbyJngaEAVY"]],["Kirby's Dream Land","Green Greens",["Y9ppj6hUKVA","KRRUzIggjyw","4Jg6yQ2XaPg"]],["Kirby Super Star","Gourmet Race",["Se1uh3PS78Y","4sneo6twzmM"]],["Kirby Super Star","Revenge of Meta Knight",["ruo-eXOk72o","xsTt1FS7boo","NdWckdX4LlE"]],["Super Metroid","Vs. Ridley",["J3MrAxYhtAc","uNzArOXYSyI","ifp_3UZ04qI"]],["Metroid Prime","Phendrana Drifts",["ZbbUv1hz6mE","oRZVPHMPYLQ","ZxrOr7tGCcw"]],["Star Fox 64","Corneria",["ObgQrHb2GRA","QKdkV2jkQGs","7Ks6R1ZLtco"]],["F-Zero","Big Blue",["pIrYhcgnoRI","rJwV3gPZi4Q","9Ccq1QlEpSY"]],["F-Zero","Mute City",["La_Kb8U6OXA","Q2NMceQvd64","ZK8reEwsKK8"]],["Super Smash Bros. Brawl","Main Theme",["zeKE0NHUtUw","QnmQFlIDY3c","KWA2dOhy7mU"]],["Super Smash Bros. Ultimate","Lifelight",["tHhUip8wGOs","9e_4W2qPtzE","0DDKiPjXJmo"]],["Banjo-Kazooie","Spiral Mountain",["b1cRQRdg62E","_EZa2-RIUQc","-_Q6yI7bBWk"]],["Banjo-Kazooie","Treasure Trove Cove",["5DQfnj33-QU","ECMUo0tcf-c","z4TEVSDWqmQ"]],["Xenoblade Chronicles","Gaur Plain",["UDJtsfR51To","GHAswA6sRlw","LFrZo963D0s"]],["Xenoblade Chronicles","You Will Know Our Names",["g7yNyhLOIa4","RZ3ZC8eHpv8","gFIei46tyN8"]],["Fire Emblem","Fire Emblem Theme",["KeNQBo1Z_3c","-gTSoyQgzWs","Spcc4JYk8Qc"]],["Splatoon","Splattack!",["nU8vbkWptc4","ede-ljoPdO4","64sJanf_crs"]],["Splatoon 3","Anarchy Rainbow",["v5PRinPIkis","fGgUFLXJMVI"]],["EarthBound / MOTHER","Pollyanna",["ODzZKAQFIww","SReYHLNbxXs","G-QFRdHv61s"]],["Pikmin","Forest of Hope",["HoMx0BTPVgE","3fTGcmIaaMY","YoY_s_iJ1uY"]],["Animal Crossing: New Horizons","Main Theme",["lI_C1Bjdqn4"]],["Wii","Mii Channel",["E9s1ltPGQOo","dsEjzCaplQs","bYAruj_ZZgs"]],["Wii","Wii Shop Channel",["8avMLHvLwRQ","yyjUmv1gJEg","_xc7tNbjnHM"]],["Wii Sports","Title Theme",["2qvAxPqy2wA","e2BfHF2npxE","FFs8XXBU8_w"]],["Undertale","Megalovania",["Q8wcX9fW6uk","0FCvzsVlXpQ","9p32HXRBB0I"]],["Undertale","Hopes and Dreams",["wbO3p7_Mf30","HA3Ks8NLS-Y","o-oiB1irhB8"]],["Undertale","Spear of Justice",["UP4PzIYsnFk","ApWpYmO7G28"]],["Undertale","Bonetrousle",["AKAiUtWZ4xY","M0I76Xp_ntM"]],["Undertale","Fallen Down",["VXwoaYBzvHU","qH5hM1ILuFQ","eXvO-AzW4ds"]],["Deltarune","Rude Buster",["uY8hz6USA6E","GPL5Hkl11IQ","CBON_iqckqw"]],["Deltarune","THE WORLD REVOLVING",["YJgvrQXlRaw","Z01Tsgwe2dQ","7_SsDAAOzaw"]],["Minecraft","Sweden",["aBkTkxKDduc","-jCvPNAmbEQ","RrYVwJCtV60"]],["Minecraft","Wet Hands",["lq1vZxM-Iic","mukiMaOSLEs","en4a2uTHimI"]],["Minecraft","Subwoofer Lullaby",["Gpd85y_iTxY","Mm09rmYXQew","ibUOxEBxVsE"]],["Minecraft","Pigstep",["7JjMXNE9pdY","n_BxqJFL-28","BTthtlT80Rc"]],["Terraria","Overworld Day",["6ub_wEHzoU8","wQNEknFtrsM","S20YJA6CoZo"]],["Stardew Valley","Stardew Valley Overture",["FQSHcl6TJb4"]],["Celeste","First Steps",["iV3d_OMib1s","YehZRWg14HA","JwmACCBN8AA"]],["Celeste","Resurrections",["c-XZWMJ3jJ8","5ms9lXWCBww"]],["Celeste","Confronting Myself",["eP0We915ClM","J7qqT5Ot9R0","xL6QpNB5wWI"]],["Hollow Knight","City of Tears",["MJDn70jh1V0","vnYF5Ze-pyU","PjgYB1jL1WQ"]],["Hollow Knight","Hornet",["7xkM8mWC4Kk","LXHgSo74LXo","gRBXDauTJbI"]],["Hollow Knight","Sealed Vessel",["ze0Rk-m0w2A","Si5kGxjjGhQ","IHIT57c-Yak"]],["Cuphead","Floral Fury",["2clUY-OsCpY","gHAtsy-l9HU","zont1gad5uA"]],["Cuphead","Don't Deal with the Devil",["D4Hr0L9PrAg","0tuCSTr1XxI","kF1ipj5UMuQ"]],["Hades","In the Blood",["akG1Y2Lkx9s","wR4YIbnZcwU","TRSpQDZMctA"]],["Outer Wilds","Travelers",["YR_wIb_n4ZU","z34enKCqRGk","9sZq71GFjaE"]],["Journey","Apotheosis",["ypNgvc6c6Cc","MN-U05agRKE","eEoyonBXGrc"]],["Ori and the Blind Forest","Light of Nibel",["1x7g-CMakFU","t6vWDz5NzOY","0DejonMOI_8"]],["Ori and the Will of the Wisps","Main Theme",["Qh3NnE7Ye2M","K1eItiZ0WIM","sE6JXUghfgk"]],["Shovel Knight","Strike the Earth!",["W7rhEKTX-sE","hcdb5SQ1srM","0mImWzWPp2M"]],["Cave Story","Moonsong",["CtlhFnTXlgI","MtkECyiRExE"]],["Katamari Damacy","Katamari on the Rocks",["BMRgfEnOKKU","Ov6e0RskT9A","ERvwPRIQn5U"]],["Ōkami","The Sun Rises",["bOM2-C7KWEs","hRu7vRgnze4","MmvkOc_OaMU"]],["Geometry Dash","Stereo Madness",["fOL57fTmkuE","tof8_p0F3kg","iJ7LO1r09m4"]],["Portal","Still Alive",["Y6ljFaKRTrI","aXeOYe1A0BA","BCS32jXLShE"]],["Portal 2","Want You Gone",["dVVZaZ8yO6o","DgSLSoBWClU","LJKmM-MM2cU"]],["Half-Life 2","Triage at Dawn",["KYhfEHui8-w","NF1kuVwfSCA","M8tqzUVvUlY"]],["Team Fortress 2","Main Theme",["Vbt8u4scI_s","MAN0YefOkSU","Ti9x7Q5kWIc"]],["Team Fortress 2","Rocket Jump Waltz",["eDNuX8iR1xk","4iJfC_jTNSM","oiuCfgXSZQM"]],["Team Fortress 2","Right Behind You",["MMX1dG7vDCM","Va3-PF09pXw","ZrfLaDmCBGY"]],["Team Fortress 2","Faster Than a Speeding Bullet",["YciTA18gq_E","Mdmf0gLmFYg","W1uOiSCrG3A"]],["Team Fortress 2","MEDIC!",["QRc2ZOOkPQs","SpUXacWfPu4","691B92oIrrY"]],["Team Fortress 2","Intruder Alert",["qcGFDhIUG4k","588SHcQmJ-s","fm9giobPe1I"]],["Shadow of the Colossus","Prologue ~To the Ancient Land",["usiC_nE9fsQ","msfnoVKL0OI","L9vAr3xtawc"]],["Shadow of the Colossus","The Opened Way",["PACbFIVAh1M","d8t3enev9BM","KZ3NJYR3LqY"]],["Shadow of the Colossus","A Messenger from Behind",["95ElpKKq1qo","Y3F8tIumIQc","a_mfyxT0lgc"]],["Shadow of the Colossus","Swift Horse",["-0hl3yL2Eso","zOFrPKy3GOI","eZ4OvGZFeWY"]],["Shadow of the Colossus","Revived Power",["d1Fbyig7j_I","nQUnKFWkIes","TH-2OVQjhWo"]],["Shadow of the Colossus","The End of the Battle",["R-JasZkVtHk","gC0yAdUavHE","GAz3NhCcBpE"]],["Halo: Combat Evolved","Halo Theme",["bsBbrMO2IOw","Ak7CdPNsFqc","3pgnOzhgd-M"]],["Halo 3","One Final Effort",["5b8zZmSZC_0","iAdXRt0spa4","P2NVJSJVGVQ"]],["DOOM (1993)","At Doom's Gate (E1M1)",["DnPkRkCwgNw","PzngWaXAWWM","2nPqZrNQ5G0"]],["DOOM (2016)","Rip & Tear",["zZMg9ryeWOw","2qY8h2ScKJQ","sUhCK1vleyY"]],["DOOM (2016)","BFG Division",["QHRuTYtSbJQ","YVDwo4DladY","EpKd5AYwzaQ"]],["The Elder Scrolls V: Skyrim","Dragonborn",["kvTVbEAd90g","813-3iL5OsE","s_R8N70nqBE"]],["The Elder Scrolls V: Skyrim","Secunda",["6gmtVl-zxyM","VPgZFgOvJDE","XCpM1w4Cyxc"]],["The Elder Scrolls V: Skyrim","Far Horizons",["ZarbRbkV4ak","3WuVYF8koCQ","eeNouBVi0dw"]],["The Witcher 3","Silver for Monsters",["YQS4o_bYA_M","jRG0gyVFP60","8X7L3DqWIxI"]],["Mass Effect","Vigil",["Hqa8l8E-y_c","Ea1eWarxdxQ","hV1pPgpcAVw"]],["Mass Effect 2","Suicide Mission",["ZQy8dqzV56A","DgOvZQ0TU2I","GVSsJzSK-H8"]],["Civilization IV","Baba Yetu",["IJiHDmyhE1A","OaJbIW-OUmU","G30MhXmlZGE"]],["Metal Gear Solid","Main Theme",["IV4aKA4SnQs","5105DeorjrY","yd3zMu707XU"]],["Metal Gear Solid 3","Snake Eater",["sd3-RXgoNAM","xN3L0ZHIsYo","N2Xt7bTInko"]],["Metal Gear Rising: Revengeance","Rules of Nature",["jOpzP33_USs","_vfkzMAWWKE","N3472Q6kvg0"]],["Silent Hill 2","Theme of Laura",["fVFIq9ugt8s","sPLpepXuoJA","pmd9eAJRWMw"]],["Resident Evil 4","Serenity (Save Room)",["a5xcnBH3yt8","FHxatvmL9t4","b_qAn4Sik0c"]],["Final Fantasy","Prelude",["XX9AroX7x1o","1jGCcc_1EO0","IGbjiOft-cw"]],["Final Fantasy VI","Terra's Theme",["nAGT7oZUHGY","ObccgHQdos0","U4alRonWgIo"]],["Final Fantasy VI","Dancing Mad",["OhEck7aB-Qc","xebkviV3MsY","sJ0HeCZYAhI"]],["Final Fantasy VII","One-Winged Angel",["mYdf0yqK_Fc","zkZGFNCS6iQ","dgPKfbKIR7A"]],["Final Fantasy VII","Aerith's Theme",["iqMbmkUpihA","WVJdv-s9QWg","BYtzCUI5pq0"]],["Final Fantasy VIII","Liberi Fatali",["sbgtlcAonOM","gcJ_yFSw3-k","-5qt0NK5b9A"]],["Final Fantasy X","To Zanarkand",["6fp81GzKarQ","CCPtGpqvKt4","S-fPc2-9Mww"]],["Kingdom Hearts","Dearly Beloved",["mZQ9jTUIbsc","wQaBsVE2eII","sihC5l_gIak"]],["Kingdom Hearts","Simple and Clean",["_Hl3W4HB254","Vobega08Iys","oImFhl8xjds"]],["Kingdom Hearts II","Sanctuary",["QIpMDjjhvmg","GZpNjZ163H0","jtSlzqZa1jY"]],["Chrono Trigger","Corridors of Time",["BXo3DrXHY8w","4oppwnZcxlI","Tg3C1ITqHQM"]],["Chrono Trigger","To Far Away Times",["kSS6ZRIi7mM","wjwP94EHJsE"]],["Chrono Cross","Scars of Time",["251bpzng0KI","JmfAL0qViy4"]],["Persona 3","Mass Destruction",["28jpY6JHU1c","TZn3yhWxt5A","iU_RpMwE37g"]],["Persona 4","Reach Out to the Truth",["TeOwcqngDx4","kw_WCDkq7qI","UoWXk-6pbsk"]],["Persona 5","Last Surprise",["5-pYuiWoE-Q","Ec4YbVP9R-A","qOp4TZeZ8mY"]],["NieR","Song of the Ancients",["RyxjxEOApIE","4yW7CFSYkqM","eWTC9-YEcVw"]],["NieR: Automata","Weight of the World",["Yza2l5sWYzg","ToBQY630PZE","XmN1gBLnvo4"]],["Dark Souls","Gwyn, Lord of Cinder",["Nvv9w-UPuSY","qwlIlWi2IXo","3bqLGebDRIY"]],["Bloodborne","Ludwig, the Holy Blade",["hJz38VmS45M","w8S5sEKsPLk","NjzF3XWrDdA"]],["Elden Ring","Main Theme",["7FdcRpMVDHA","aXzlZ4vFKvM","3fhYz_W-gZU"]],["Castlevania","Vampire Killer",["btgi3TPL3AE","0AZ5XZHIDh0","p1dKY9j5F94"]],["Castlevania II: Simon's Quest","Bloody Tears",["wKWJkiWGS8M","JY5A45xEBUE","r6xpEV-W60I"]],["Mega Man 2","Dr. Wily Stage 1",["aTbfpkByIM8","Mo6if_sRTcU","38IG7Id2mbM"]],["Mega Man X","Storm Eagle Stage",["kmhi3FowqMo","AipJNHPvIU4","sM0MqGN9CHw"]],["Tetris (Game Boy)","Korobeiniki (Type A)",["9OLtOdnE1mg","fvZ4N_u98xg","De9ZRYi2bR0"]],["Phoenix Wright: Ace Attorney","Objection! 2001",["xA1ba3EErd0","_I34nshlOPk","fR4P8o95WPA"]],["Street Fighter II","Guile's Theme",["FEdbR0jnfvQ","bhgz3mF7FFs","iB4dK5RQgB4"]],["Street Fighter II","Ken's Theme",["tjLeCBq3qkA","N_yW6BRCNj8","8UXdTwHlJFY"]],["Crash Bandicoot","N. Sanity Beach",["v7my2hN_Zpk","e68I_a6Y8rY","mAVFjb1KMZM"]],["Spyro the Dragon","Town Square",["VEe_3VF-lHE","YL-5Na0FCuI","nkKPBbE-pEE"]],["Assassin's Creed II","Ezio's Family",["K892qn3U524","JZBo_TUMGBk","K2DnJRQQJ9g"]],["The Last of Us","Main Theme",["Pt1pOY3_W64","uZy7AT8xT8Q","xMjWBW3x5I4"]],["God of War (2018)","Main Theme",["jpyVfd8TyoI","AdW2gSrEiXw","mzGCCx8rnvU"]],["Uncharted 2","Nate's Theme",["7svLhpkXTc4","Mzj9Xl614SY","To2nyZRpZ38"]],["Red Dead Redemption 2","That's the Way It Is",["HjYLY3BGDY4","aiQ0V-hv7GQ","5kucnYsCrXE"]],["Grand Theft Auto: San Andreas","Main Theme",["7qfbi3HACV8","yZjM9ObjBjs","ofjKldBTrE8"]],["Grand Theft Auto IV","Soviet Connection",["93TW692tQb8","u6mFNznjmbM","v-1y7NChV2I"]],["Fallout 4","Main Theme",["6YmUufemZSM","p0pHzEfswiU","FHCk2UU4HBM"]]];
+
+const ROUND_NAMES = {128:"Ronda de 128",64:"Ronda de 64",32:"Dieciseisavos",16:"Octavos",8:"Cuartos",4:"Semifinales",2:"Final"};
+const SIZES = [16,32,64,128];
+const PEER_PREFIX = "torneovgm-v1-";
+
+/* ---------- utilidades ---------- */
+const $ = (s, el=document) => el.querySelector(s);
+const view = $("#view");
+const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const clone = o => JSON.parse(JSON.stringify(o));
+const ls = {
+  get(k){ try{ return localStorage.getItem(k); }catch{ return null; } },
+  set(k,v){ try{ localStorage.setItem(k,v); }catch{} },
+  del(k){ try{ localStorage.removeItem(k); }catch{} }
+};
+function toast(msg){ const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => t.hidden = true, 3000); }
+const cleanNick = v => String(v||"").replace(/[\p{Cc}\p{Cf}]/gu,"").trim().slice(0,20);
+const rid = n => Array.from(crypto.getRandomValues(new Uint8Array(n)), b => "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[b % 32]).join("");
+function ytId(s){
+  s = String(s||"").trim();
+  if (/^[A-Za-z0-9_-]{11}$/.test(s)) return s;
+  const m = s.match(/(?:youtu\.be\/|[?&]v=|\/embed\/|\/shorts\/|\/live\/)([A-Za-z0-9_-]{11})/);
+  return m ? m[1] : null;
+}
+const searchUrl = s => "https://www.youtube.com/results?search_query=" + encodeURIComponent(s[0] + " " + s[1] + " OST");
+
+/* ---------- estado ---------- */
+let role = null;            // "host" | "guest"
+let code = null;
+let myId = ls.get("vgm.uid") || ("u" + rid(10)); ls.set("vgm.uid", myId);
+let nick = ls.get("vgm.nick") || "";
+let S = null;               // estado del torneo (lo manda el anfitrión)
+let voters = {};            // id -> {nick, k, s, on}
+let library = loadLibrary();
+let tab = "duel", bracketRound = null, confirmReset = false, libDirty = false;
+let setup = {size:64, order:"random", hidden:true};
+let peer = null, conns = new Map(), hostConn = null, reconnectT = null;
+
+function loadLibrary(){
+  try { const l = JSON.parse(ls.get("vgm.library") || "null"); if (Array.isArray(l) && l.length >= 16) return l; } catch {}
+  return clone(DEFAULT_SONGS);
+}
+
+/* ---------- torneo ---------- */
+const sizeOf = st => st.rounds[0].length;
+const roundName = (st, r) => ROUND_NAMES[sizeOf(st) >> r] || ("Ronda " + (r+1));
+const matchesIn = (st, r) => sizeOf(st) >> (r+1);
+const lastRound = st => Math.log2(sizeOf(st)) - 1;
+const keyOf = st => st.gid + ":" + st.cur.r + ":" + st.cur.m;
+const pair = (st, r, m) => [st.rounds[r][2*m], st.rounds[r][2*m+1]];
+function doneMatches(st){ let n = 0; for (let r = 1; r < st.rounds.length; r++) for (const w of st.rounds[r]) if (w !== null) n++; return n; }
+
+function newTournament(){
+  let idx = library.map((_, i) => i);
+  if (setup.order === "random") for (let i = idx.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i+1)); [idx[i], idx[j]] = [idx[j], idx[i]]; }
+  idx = idx.slice(0, setup.size);
+  const songs = idx.map(i => clone(library[i]));
+  const rounds = [songs.map((_, i) => i)];
+  for (let k = setup.size/2; k >= 1; k /= 2) rounds.push(Array(k).fill(null));
+  return {gid: rid(6), songs, rounds, scores:{}, cur:{r:0, m:0}, status:"voting", hidden:setup.hidden, manual:{a:0,b:0}, reveal:null};
+}
+
+function tally(){
+  const res = {a:0, b:0, list:[]};
+  const k = S ? keyOf(S) : "-";
+  for (const [id, v] of Object.entries(voters)) {
+    const voted = v.k === k && (v.s === "a" || v.s === "b");
+    if (voted) res[v.s]++;
+    res.list.push({id, nick: v.nick || "Jugador", s: voted ? v.s : null, on: v.on, me: id === myId});
+  }
+  if (S && S.manual) { res.a += S.manual.a || 0; res.b += S.manual.b || 0; }
+  return res;
+}
+
+/* ---------- red (PeerJS) ---------- */
+const peerOpts = {debug: 0, config: {iceServers: [{urls: "stun:stun.l.google.com:19302"}, {urls: "stun:global.stun.twilio.com:3478"}]}};
+
+function broadcast(){
+  if (role !== "host") return;
+  ls.set("vgm.host", JSON.stringify({code, S, voters, setup}));
+  const msg = {t:"state", S, voters};
+  for (const c of conns.values()) if (c.open) { try { c.send(msg); } catch {} }
+}
+function startHost(existing){
+  role = "host";
+  code = existing || rid(4);
+  if (!voters[myId]) voters[myId] = {nick: nick || "Anfitrión", k:null, s:null, on:true};
+  voters[myId].on = true; voters[myId].nick = nick || "Anfitrión";
+  history.replaceState(null, "", "#" + code);
+  render();
+  openHostPeer();
+}
+function openHostPeer(){
+  if (typeof Peer === "undefined") { toast("No se pudo cargar la conexión online. Revisa tu internet."); setNet("Sin conexión"); return; }
+  setNet("Abriendo sala…");
+  try { if (peer) peer.destroy(); } catch {}
+  peer = new Peer(PEER_PREFIX + code, peerOpts);
+  peer.on("open", () => { setNet(); broadcast(); render(); });
+  peer.on("connection", c => {
+    c.on("open", () => { conns.set(c.peer, c); });
+    c.on("data", d => onHostData(c, d));
+    c.on("close", () => { conns.delete(c.peer); for (const v of Object.values(voters)) if (v.peer === c.peer) v.on = false; broadcast(); renderLive(); setNet(); });
+    c.on("error", () => {});
+  });
+  peer.on("disconnected", () => { setNet("Reconectando…"); setTimeout(() => { try { peer.reconnect(); } catch {} }, 1500); });
+  peer.on("error", e => {
+    if (e.type === "unavailable-id") {
+      if (!ls.get("vgm.host")) { code = rid(4); history.replaceState(null, "", "#" + code); }
+      setTimeout(openHostPeer, 3000);
+      setNet("Esperando la sala…");
+    } else if (e.type === "network" || e.type === "server-error" || e.type === "socket-error" || e.type === "socket-closed") {
+      setNet("Reconectando…"); setTimeout(openHostPeer, 4000);
+    }
+  });
+}
+function onHostData(c, d){
+  if (!d || typeof d !== "object") return;
+  const id = typeof d.id === "string" ? d.id.slice(0, 20) : null;
+  if (!id || id === myId) return;
+  if (d.t === "hello") {
+    const prev = voters[id] || {k:null, s:null};
+    voters[id] = {nick: cleanNick(d.nick) || "Jugador", k: prev.k, s: prev.s, on: true, peer: c.peer};
+    broadcast(); renderLive(); setNet();
+  } else if (d.t === "vote" && voters[id] && S && S.status === "voting") {
+    if (d.k === keyOf(S) && (d.s === "a" || d.s === "b" || d.s === null)) { voters[id].k = d.s ? d.k : null; voters[id].s = d.s; broadcast(); renderLive(); }
+  } else if (d.t === "nick" && voters[id]) {
+    voters[id].nick = cleanNick(d.nick) || "Jugador"; broadcast(); renderLive();
+  }
+}
+
+function startGuest(c){
+  role = "guest"; code = c.toUpperCase();
+  history.replaceState(null, "", "#" + code);
+  ls.set("vgm.lastcode", code);
+  render();
+  if (typeof Peer === "undefined") { toast("No se pudo cargar la conexión online. Revisa tu internet."); return; }
+  setNet("Conectando…");
+  peer = new Peer(undefined, peerOpts);
+  peer.on("open", connectToHost);
+  peer.on("disconnected", () => { setTimeout(() => { try { peer.reconnect(); } catch {} }, 1500); });
+  peer.on("error", e => {
+    if (e.type === "peer-unavailable") { setNet("Sala no encontrada"); scheduleReconnect(); }
+    else if (["network","server-error","socket-error","socket-closed"].includes(e.type)) { setNet("Reconectando…"); scheduleReconnect(); }
+  });
+}
+function scheduleReconnect(){ clearTimeout(reconnectT); reconnectT = setTimeout(connectToHost, 3500); }
+function connectToHost(){
+  if (!peer || peer.destroyed) return;
+  if (peer.disconnected) { try { peer.reconnect(); } catch {} scheduleReconnect(); return; }
+  try { if (hostConn) hostConn.close(); } catch {}
+  hostConn = peer.connect(PEER_PREFIX + code, {reliable: true});
+  const c = hostConn;
+  c.on("open", () => { setNet(); c.send({t:"hello", id: myId, nick: nick || "Jugador"}); });
+  c.on("data", d => {
+    if (!d || d.t !== "state") return;
+    const prevKey = S ? keyOf(S) : null;
+    S = d.S || null; voters = d.voters || {};
+    const newKey = S ? keyOf(S) : null;
+    if (prevKey !== newKey || !S || S.status === "done") render(); else { renderStageState(); renderLive(); }
+    setNet();
+  });
+  c.on("close", () => { if (c === hostConn) { setNet("Reconectando…"); scheduleReconnect(); } });
+  c.on("error", () => {});
+}
+function send(msg){
+  msg.id = myId;
+  if (role === "host") { onHostLocal(msg); return; }
+  if (hostConn && hostConn.open) { try { hostConn.send(msg); } catch {} }
+  else toast("Sin conexión con el anfitrión. Reintentando…");
+}
+function onHostLocal(msg){
+  if (msg.t === "vote" && S && S.status === "voting") { voters[myId].k = msg.s ? msg.k : null; voters[myId].s = msg.s; }
+  if (msg.t === "nick") voters[myId].nick = cleanNick(msg.nick) || "Anfitrión";
+  broadcast(); renderLive();
+}
+let netOverride = null;
+function setNet(txt){
+  netOverride = txt || null;
+  const nc = $("#netChip"); if (!role) { nc.hidden = true; return; }
+  nc.hidden = false;
+  if (netOverride) { nc.className = "chip"; nc.textContent = netOverride; return; }
+  const on = Object.values(voters).filter(v => v.on).length;
+  nc.className = "chip live";
+  nc.innerHTML = (role === "host" ? "Anfitrión · " : "") + "<b>" + on + "</b> conectados";
+}
+
+/* ---------- acciones del anfitrión ---------- */
+function act(fn){ if (role !== "host" || !S) return; fn(S); broadcast(); }
+function closeVoting(){
+  const {a, b} = tally();
+  act(n => {
+    const {r, m} = n.cur;
+    n.scores[r + "-" + m] = [a, b]; n.reveal = {a, b};
+    if (a === b) { n.status = "tie"; return; }
+    n.rounds[r+1][m] = a > b ? n.rounds[r][2*m] : n.rounds[r][2*m+1];
+    n.status = "reveal";
+  });
+  renderStageState(); renderLive();
+}
+function pickWinner(side){ act(n => { const {r, m} = n.cur; n.rounds[r+1][m] = n.rounds[r][2*m + (side === "a" ? 0 : 1)]; n.status = "reveal"; }); renderStageState(); renderLive(); }
+function reopen(){ act(n => { const {r, m} = n.cur; n.rounds[r+1][m] = null; delete n.scores[r+"-"+m]; n.reveal = null; n.status = "voting"; }); renderStageState(); renderLive(); }
+function nextMatch(){
+  act(n => {
+    let {r, m} = n.cur;
+    if (r === lastRound(n)) { n.status = "done"; return; }
+    m++; if (m >= matchesIn(n, r)) { r++; m = 0; }
+    n.cur = {r, m}; n.status = "voting"; n.reveal = null; n.manual = {a:0, b:0};
+  });
+  bracketRound = null; render();
+}
+function adjustManual(side, d){ act(n => { n.manual[side] = Math.max(0, (n.manual[side]||0) + d); }); renderStageState(); renderLive(); }
+
+/* ---------- YouTube ---------- */
+let ytReady = false, ytQueue = [];
+window.onYouTubeIframeAPIReady = () => { ytReady = true; ytQueue.splice(0).forEach(f => f()); };
+(function loadYT(){ const s = document.createElement("script"); s.src = "https://www.youtube.com/iframe_api"; s.onerror = () => toast("No se pudo cargar YouTube."); document.head.appendChild(s); })();
+const players = {};
+function destroyPlayers(){ for (const k of Object.keys(players)) { try { players[k].p && players[k].p.destroy(); } catch {} delete players[k]; } }
+function mountPlayer(slot, song){
+  const host = document.getElementById("yt-" + slot);
+  if (!host) return;
+  const ids = (song[2] || []).map(ytId).filter(Boolean);
+  const fallback = () => {
+    const box = document.getElementById("yt-" + slot) || host;
+    const wrap = box.closest(".frame");
+    if (wrap) wrap.innerHTML = `<div class="fallback"><span>No hay vídeo que se pueda reproducir aquí para esta canción.</span><a class="btn sm" href="${esc(searchUrl(song))}" target="_blank" rel="noopener">Buscar en YouTube</a></div>`;
+  };
+  if (!ids.length) { fallback(); return; }
+  const go = () => {
+    const st = {i:0, ids};
+    players[slot] = st;
+    st.p = new YT.Player("yt-" + slot, {
+      videoId: ids[0], width: "100%", height: "100%",
+      playerVars: {rel:0, modestbranding:1, playsinline:1, origin: location.origin},
+      events: {
+        onError: () => {
+          st.i++;
+          if (st.i < st.ids.length) { try { st.p.cueVideoById(st.ids[st.i]); } catch { fallback(); } }
+          else { try { st.p.destroy(); } catch {} fallback(); }
+        },
+        onStateChange: e => {
+          if (e.data === 1) for (const [k, o] of Object.entries(players)) if (k !== slot && o.p && o.p.pauseVideo) { try { o.p.pauseVideo(); } catch {} }
+        }
+      }
+    });
+  };
+  if (ytReady && window.YT && YT.Player) go(); else ytQueue.push(go);
+}
+
+/* ---------- render ---------- */
+function render(){
+  destroyPlayers();
+  const inRoom = !!role;
+  $("#tabs").hidden = !inRoom;
+  document.querySelectorAll(".tab").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === tab)));
+  const rc = $("#roundChip"), cc = $("#codeChip");
+  rc.hidden = !S; cc.hidden = !code;
+  if (S) rc.innerHTML = S.status === "done" ? "<b>Torneo terminado</b>" : "<b>" + esc(roundName(S, S.cur.r)) + "</b> · " + (S.cur.m+1) + "/" + matchesIn(S, S.cur.r);
+  if (code) cc.innerHTML = "Sala <b>" + esc(code) + "</b>";
+  setNet(netOverride);
+  if (!inRoom) { view.innerHTML = renderHome(); return; }
+  if (tab === "duel") {
+    view.innerHTML = renderDuel();
+    if (!S) renderLive();
+    else if (S.status !== "done") { const [ia, ib] = pair(S, S.cur.r, S.cur.m); mountPlayer("a", S.songs[ia]); mountPlayer("b", S.songs[ib]); renderStageState(); renderLive(); }
+    else { const fin = lastRound(S); mountPlayer("c", S.songs[S.rounds[fin+1][0]]); }
+  } else if (tab === "bracket") view.innerHTML = renderBracket();
+  else renderSongs();
+}
+
+function inviteLink(){ return location.origin + location.pathname + "#" + code; }
+
+function renderHome(){
+  const last = ls.get("vgm.lastcode") || "";
+  const hostSaved = ls.get("vgm.host");
+  return `<section class="home">
+    <h1>Bracket de <span>bandas sonoras</span></h1>
+    <p>Duelos 1 contra 1 entre canciones de videojuegos. Escucháis las dos aquí mismo, votáis cada uno desde su PC y la más votada pasa de ronda hasta que quede una campeona.</p>
+    <label class="field"><span>Tu nombre</span><input class="inp" id="nick" maxlength="20" placeholder="Por ejemplo: Fitxi" value="${esc(nick)}" autocomplete="off"></label>
+    <div class="choices">
+      <div class="choice">
+        <h2>Crear sala</h2>
+        <p>Eres el anfitrión: eliges el tamaño del bracket, cierras cada votación y pasas al siguiente duelo.</p>
+        <button class="btn primary" data-act="host">Crear sala</button>
+        ${hostSaved ? `<button class="btn ghost" data-act="host-resume">Volver a mi sala anterior</button>` : ""}
+      </div>
+      <div class="choice">
+        <h2>Unirme</h2>
+        <p>Escribe el código de 4 letras que te pase el anfitrión, o abre directamente su enlace.</p>
+        <input class="inp code" id="joinCode" maxlength="4" placeholder="ABCD" value="${esc(last)}" autocomplete="off" aria-label="Código de sala">
+        <button class="btn" data-act="join">Entrar</button>
+      </div>
+    </div>
+  </section>`;
+}
+
+function renderDuel(){
+  if (!S) {
+    if (role === "host") return renderLobby();
+    return `<div class="lobby"><h1>Esperando al anfitrión</h1><p>Estás en la sala ${esc(code)}. En cuanto el anfitrión empiece el torneo aparecerá aquí el primer duelo.</p></div>`;
+  }
+  if (S.status === "done") return renderChampion();
+  return renderStage();
+}
+
+function renderLobby(){
+  const n = library.length;
+  const sizeBtns = SIZES.map(sz => `<button type="button" data-act="size" data-v="${sz}" aria-pressed="${setup.size===sz}" ${n < sz ? "disabled" : ""}>${sz}<small>${Math.log2(sz)} rondas · ${sz-1} duelos</small></button>`).join("");
+  return `<section class="lobby">
+    <div class="invite"><span>Código de la sala</span><span class="big">${esc(code)}</span><span class="lnk" id="invLink">${esc(inviteLink())}</span><button class="btn sm" data-act="copy">Copiar enlace</button></div>
+    <h1>Prepara el torneo</h1>
+    <div class="field"><span>Tamaño del bracket</span><div class="seg">${sizeBtns}</div></div>
+    <div class="field"><span>Emparejamientos</span><div class="seg">
+      <button type="button" data-act="order" data-v="random" aria-pressed="${setup.order==="random"}">Al azar</button>
+      <button type="button" data-act="order" data-v="list" aria-pressed="${setup.order==="list"}">En el orden de la lista</button>
+    </div></div>
+    <div class="field"><span>Votos durante el duelo</span><div class="seg">
+      <button type="button" data-act="hidden" data-v="1" aria-pressed="${setup.hidden}">Ocultos hasta cerrar</button>
+      <button type="button" data-act="hidden" data-v="0" aria-pressed="${!setup.hidden}">En directo</button>
+    </div></div>
+    <p class="hint">Hay ${n} canciones en la lista. ${n > setup.size ? (setup.order==="random" ? `Entran ${setup.size} al azar.` : `Entran las ${setup.size} primeras.`) : ""} Puedes cambiar la lista en la pestaña Canciones.</p>
+    <div class="voters" id="voters"></div>
+    <div><button class="btn primary" data-act="start" ${n < setup.size ? "disabled" : ""}>Empezar torneo</button></div>
+  </section>`;
+}
+
+function songCard(side, idx){
+  const s = S.songs[idx];
+  return `<article class="card ${side}" id="card-${side}">
+    <div class="frame"><div id="yt-${side}"></div></div>
+    <div class="label"><h2 class="song">${esc(s[1])}</h2><span class="game">${esc(s[0])}</span></div>
+    <div class="score" id="score-${side}" hidden></div>
+    <button class="vote" data-act="vote" data-side="${side}" aria-pressed="false">Votar</button>
+  </article>`;
+}
+
+function renderStage(){
+  const {r, m} = S.cur, [ia, ib] = pair(S, r, m);
+  return `<section>
+    <div class="meta"><span class="round">${esc(roundName(S, r))}</span><span class="count"><b>${m+1}</b>/${matchesIn(S, r)} · <span id="played">${doneMatches(S)}</span>/${sizeOf(S)-1} jugados</span></div>
+    <div class="vs">${songCard("a", ia)}<div class="vs-mark" aria-hidden="true">VS</div>${songCard("b", ib)}</div>
+    <div class="meter" aria-hidden="true"><i class="ma" id="ma"></i><i class="mb" id="mb"></i></div>
+    <div class="voters" id="voters"></div>
+    <div id="ctrl"></div>
+  </section>`;
+}
+
+/* partes del duelo que cambian sin recargar los vídeos */
+function renderStageState(){
+  if (tab !== "duel" || !S || S.status === "done" || !$("#card-a")) return;
+  const {r, m} = S.cur, [ia, ib] = pair(S, r, m), w = S.rounds[r+1][m];
+  [["a", ia], ["b", ib]].forEach(([side, idx]) => {
+    const card = $("#card-" + side);
+    card.classList.toggle("lose", w !== null && w !== idx);
+    let crown = card.querySelector(".crown");
+    if (w === idx && !crown) { crown = document.createElement("span"); crown.className = "crown"; crown.textContent = "Pasa de ronda"; card.prepend(crown); }
+    if (w !== idx && crown) crown.remove();
+  });
+  const pl = $("#played"); if (pl) pl.textContent = doneMatches(S);
+  const ctrl = $("#ctrl"); if (!ctrl) return;
+  if (role === "host") {
+    const mm = S.manual || {a:0,b:0};
+    let c = "";
+    if (S.status === "voting") c = `<div class="row"><button class="btn primary" data-act="close">Cerrar votación</button></div>
+      <div class="manual"><span>Votos a mano (amigos en la misma habitación):</span>
+      <span class="grp"><button class="sq a" data-act="man" data-side="a" data-d="-1" aria-label="Quitar voto a la izquierda">−</button><b>${mm.a||0}</b><button class="sq a" data-act="man" data-side="a" data-d="1" aria-label="Sumar voto a la izquierda">+</button></span>
+      <span class="grp"><button class="sq b" data-act="man" data-side="b" data-d="-1" aria-label="Quitar voto a la derecha">−</button><b>${mm.b||0}</b><button class="sq b" data-act="man" data-side="b" data-d="1" aria-label="Sumar voto a la derecha">+</button></span></div>`;
+    else if (S.status === "tie") c = `<div class="row"><strong>¡Empate ${S.reveal.a}–${S.reveal.b}!</strong>
+        <button class="btn" data-act="pick" data-side="a" style="color:var(--p1)">Gana ${esc(S.songs[ia][1])}</button>
+        <button class="btn" data-act="pick" data-side="b" style="color:var(--p2)">Gana ${esc(S.songs[ib][1])}</button>
+        <button class="btn ghost" data-act="coin">Lanzar moneda</button>
+        <button class="btn ghost" data-act="reopen">Volver a votar</button></div>`;
+    else c = `<div class="row"><button class="btn primary" data-act="next">${r === lastRound(S) ? "Coronar campeona" : "Siguiente duelo"}</button><button class="btn ghost" data-act="reopen">Repetir votación</button></div>`;
+    const reset = confirmReset
+      ? `<div class="confirm">¿Borrar el torneo en curso? Se pierden todos los resultados. <button class="btn danger" data-act="reset-yes">Sí, reiniciar</button><button class="btn ghost" data-act="reset-no">Cancelar</button></div>`
+      : `<div><button class="btn ghost sm" data-act="reset">Reiniciar torneo</button></div>`;
+    ctrl.innerHTML = `<section class="host"><div class="host-h">Panel del anfitrión</div>${c}${reset}</section>`;
+  } else {
+    ctrl.innerHTML = S.status === "tie" ? `<div class="notice" style="margin-top:16px"><strong>Empate ${S.reveal.a}–${S.reveal.b}.</strong> El anfitrión decide quién pasa.</div>`
+      : S.status === "reveal" ? `<div class="notice" style="margin-top:16px">Esperando a que el anfitrión pase al siguiente duelo.</div>` : "";
+  }
+}
+
+function renderLive(){
+  setNet(netOverride);
+  const vEl = $("#voters");
+  if (!S || S.status === "done" || !$("#card-a")) {
+    if (vEl) { const t = tally(); vEl.innerHTML = `<span class="lbl">En la sala</span>` + t.list.map(v => `<span class="pill ${v.on ? "" : "off"}"><i></i>${esc(v.nick)}${v.me ? " (tú)" : ""}</span>`).join(""); }
+    return;
+  }
+  const k = keyOf(S), me = voters[myId], mine = me && me.k === k ? me.s : null;
+  const voting = S.status === "voting";
+  ["a","b"].forEach(side => {
+    const card = $("#card-" + side), btn = card.querySelector(".vote"), picked = mine === side;
+    card.classList.toggle("picked", picked && voting);
+    btn.disabled = !voting; btn.setAttribute("aria-pressed", String(picked));
+    btn.textContent = picked ? "Tu voto ✓" : voting ? "Votar" : "Votación cerrada";
+  });
+  const t = tally();
+  const a = voting ? t.a : (S.reveal ? S.reveal.a : 0), b = voting ? t.b : (S.reveal ? S.reveal.b : 0);
+  const show = !voting || !S.hidden;
+  const sa = $("#score-a"), sb = $("#score-b");
+  sa.hidden = sb.hidden = !show;
+  if (show) { sa.innerHTML = a + "<small>votos</small>"; sb.innerHTML = b + "<small>votos</small>"; }
+  const tot = a + b;
+  $("#ma").style.width = show && tot ? (a/tot*100) + "%" : "0%";
+  $("#mb").style.width = show && tot ? (b/tot*100) + "%" : "0%";
+  const mm = S.manual || {a:0,b:0}, votedN = t.list.filter(v => v.s).length + (mm.a||0) + (mm.b||0);
+  vEl.innerHTML = `<span class="lbl">${votedN} ${votedN === 1 ? "voto" : "votos"}</span>` + t.list.map(v => {
+    const c = v.s ? (S.hidden && voting ? "voted" : "s" + v.s) : "";
+    return `<span class="pill ${c} ${v.on ? "" : "off"}"><i></i>${esc(v.nick)}${v.me ? " (tú)" : ""}</span>`;
+  }).join("");
+}
+
+function renderBracket(){
+  if (!S) return `<div class="notice">Todavía no hay torneo.</div>`;
+  const nR = lastRound(S) + 1;
+  if (bracketRound === null || bracketRound >= nR) bracketRound = S.status === "done" ? nR - 1 : S.cur.r;
+  const tabs = Array.from({length: nR}, (_, r) => `<button data-act="rtab" data-v="${r}" aria-pressed="${r === bracketRound}">${esc(roundName(S, r))}</button>`).join("");
+  const r = bracketRound, items = [];
+  for (let m = 0; m < matchesIn(S, r); m++) {
+    const [ia, ib] = pair(S, r, m), w = S.rounds[r+1][m], sc = S.scores[r + "-" + m];
+    const now = S.status !== "done" && S.cur.r === r && S.cur.m === m;
+    const line = (side, idx, n) => {
+      if (idx === null) return `<div class="ln ${side} tbd"><i></i><span class="t">Por decidir</span><span class="n"></span></div>`;
+      const s = S.songs[idx], st = w === null ? "" : (w === idx ? " w" : " l");
+      return `<div class="ln ${side}${st}"><i></i><span class="t" title="${esc(s[0] + " — " + s[1])}">${esc(s[1])} <em>· ${esc(s[0])}</em></span><span class="n">${sc ? n : ""}</span></div>`;
+    };
+    items.push(`<div class="m${now ? " now" : ""}"><div class="mh"><span>Duelo ${m+1}</span>${now ? `<span class="live">En juego</span>` : ""}</div>${line("a", ia, sc && sc[0])}${line("b", ib, sc && sc[1])}</div>`);
+  }
+  return `<div class="rtabs">${tabs}</div><div class="matches">${items.join("")}</div>`;
+}
+
+function renderChampion(){
+  const fin = lastRound(S), w = S.rounds[fin+1][0], s = S.songs[w], rows = [];
+  for (let r = 0; r <= fin; r++) for (let m = 0; m < matchesIn(S, r); m++) {
+    const [ia, ib] = pair(S, r, m); if (ia !== w && ib !== w) continue;
+    const opp = ia === w ? ib : ia, sc = S.scores[r + "-" + m] || [0,0];
+    rows.push(`<tr><td>${esc(roundName(S, r))}</td><td>${esc(S.songs[opp][1])} <span style="color:var(--muted)">· ${esc(S.songs[opp][0])}</span></td><td class="n">${ia === w ? sc[0] : sc[1]} – ${ia === w ? sc[1] : sc[0]}</td></tr>`);
+  }
+  const reset = role === "host" ? (confirmReset
+    ? `<div class="confirm">¿Borrar este torneo y volver a empezar? <button class="btn danger" data-act="reset-yes">Sí, nuevo torneo</button><button class="btn ghost" data-act="reset-no">Cancelar</button></div>`
+    : `<button class="btn primary" data-act="reset">Nuevo torneo</button>`) : "";
+  return `<section class="champ">
+    <span class="eyebrow">Campeona de ${sizeOf(S)} canciones</span>
+    <h1>${esc(s[1])}</h1><div class="g">${esc(s[0])}</div>
+    <div class="frame" style="width:100%"><div id="yt-c"></div></div>
+    <div class="tbl"><table class="path"><thead><tr><th>Ronda</th><th>Rival</th><th style="text-align:right">Votos</th></tr></thead><tbody>${rows.join("")}</tbody></table></div>
+    ${reset}
+  </section>`;
+}
+
+function libToText(lib){ return lib.map(s => s[0] + " | " + s[1] + ((s[2] && s[2].length) ? " | " + s[2].join(" ") : "")).join("\n"); }
+function parseLib(text){
+  const out = [];
+  for (const raw of text.split("\n")) {
+    const parts = raw.split("|").map(p => p.trim());
+    if (parts.length < 2 || !parts[0] || !parts[1]) continue;
+    const ids = (parts.slice(2).join(" ").split(/[\s,]+/)).map(ytId).filter(Boolean).slice(0, 5);
+    out.push([parts[0].slice(0,80), parts[1].slice(0,80), ids]);
+  }
+  return out;
+}
+function renderSongs(){
+  if (role !== "host") {
+    const list = S ? S.songs : library;
+    view.innerHTML = `<section class="songs"><p class="hint">${list.length} canciones ${S ? "en este torneo" : "en la lista"}. Solo el anfitrión puede editarla.</p><ol class="songlist">${list.map(s => `<li>${esc(s[1])} <span class="g">· ${esc(s[0])}</span></li>`).join("")}</ol></section>`;
+    return;
+  }
+  if (libDirty && $("#lib")) return;
+  view.innerHTML = `<section class="songs">
+    <h2>Lista de canciones</h2>
+    <p class="hint">Una canción por línea: <code>Juego | Canción | enlace de YouTube</code>. Puedes poner varios enlaces separados por espacios: si el primero no se deja ver incrustado, se usa el siguiente. Sin enlace, aparece un botón para buscarla en YouTube. Los cambios se usan en el próximo torneo.</p>
+    <textarea id="lib" spellcheck="false" aria-label="Lista de canciones">${esc(libToText(library))}</textarea>
+    <div class="row"><button class="btn primary" data-act="lib-save">Guardar lista</button><button class="btn ghost" data-act="lib-default">Restaurar lista original</button><span class="hint" id="libCount">${library.length} canciones</span></div>
+  </section>`;
+}
+
+/* ---------- eventos ---------- */
+function copyInvite(){
+  const link = inviteLink();
+  if (navigator.clipboard) navigator.clipboard.writeText(link).then(() => toast("Enlace copiado"), () => toast(link));
+  else toast(link);
+}
+document.addEventListener("click", e => {
+  const tb = e.target.closest(".tab");
+  if (tb) { tab = tb.dataset.tab; confirmReset = false; libDirty = false; render(); return; }
+  if (e.target.closest("#codeChip")) { copyInvite(); return; }
+  const el = e.target.closest("[data-act]"); if (!el) return;
+  const a = el.dataset.act;
+  switch (a) {
+    case "host": saveNick(); ls.del("vgm.host"); voters = {}; S = null; startHost(); break;
+    case "host-resume": {
+      saveNick();
+      try { const h = JSON.parse(ls.get("vgm.host")); S = h.S || null; voters = h.voters || {}; if (h.setup) setup = h.setup; for (const v of Object.values(voters)) v.on = false; startHost(h.code); } catch { startHost(); }
+      break;
+    }
+    case "join": {
+      saveNick();
+      const c = ($("#joinCode").value || "").trim().toUpperCase();
+      if (!/^[A-Z0-9]{4}$/.test(c)) { toast("El código tiene 4 letras o números."); break; }
+      startGuest(c); break;
+    }
+    case "copy": copyInvite(); break;
+    case "size": setup.size = +el.dataset.v; render(); break;
+    case "order": setup.order = el.dataset.v; render(); break;
+    case "hidden": setup.hidden = el.dataset.v === "1"; render(); break;
+    case "start": if (library.length >= setup.size) { S = newTournament(); for (const v of Object.values(voters)) { v.k = null; v.s = null; } broadcast(); render(); } break;
+    case "vote": {
+      if (!S || S.status !== "voting") break;
+      const k = keyOf(S), me = voters[myId], cur = me && me.k === k ? me.s : null;
+      const s = cur === el.dataset.side ? null : el.dataset.side;
+      if (role === "guest") { voters[myId] = Object.assign({}, me || {nick, on:true}, {k: s ? k : null, s}); renderLive(); }
+      send({t:"vote", k, s}); break;
+    }
+    case "close": closeVoting(); break;
+    case "pick": pickWinner(el.dataset.side); break;
+    case "coin": { const side = Math.random() < .5 ? "a" : "b"; toast("La moneda elige: " + S.songs[pair(S,S.cur.r,S.cur.m)[side === "a" ? 0 : 1]][1]); pickWinner(side); break; }
+    case "reopen": reopen(); break;
+    case "next": nextMatch(); break;
+    case "man": adjustManual(el.dataset.side, +el.dataset.d); break;
+    case "reset": confirmReset = true; if (S && S.status === "done") render(); else renderStageState(); break;
+    case "reset-no": confirmReset = false; if (S && S.status === "done") render(); else renderStageState(); break;
+    case "reset-yes": confirmReset = false; S = null; for (const v of Object.values(voters)) { v.k = null; v.s = null; } broadcast(); tab = "duel"; render(); break;
+    case "rtab": bracketRound = +el.dataset.v; render(); break;
+    case "lib-save": {
+      const songs = parseLib($("#lib").value);
+      if (songs.length < 16) { toast("Hacen falta al menos 16 canciones válidas."); break; }
+      library = songs; ls.set("vgm.library", JSON.stringify(songs)); libDirty = false; toast("Lista guardada"); render(); break;
+    }
+    case "lib-default": library = clone(DEFAULT_SONGS); ls.del("vgm.library"); libDirty = false; toast("Lista original restaurada"); render(); break;
+  }
+});
+document.addEventListener("input", e => {
+  if (e.target.id === "lib") { libDirty = true; const c = $("#libCount"); if (c) c.textContent = parseLib(e.target.value).length + " canciones (sin guardar)"; }
+  if (e.target.id === "joinCode") e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+});
+document.addEventListener("keydown", e => {
+  if (e.key === "Enter" && e.target.id === "joinCode") { const b = document.querySelector('[data-act="join"]'); if (b) b.click(); }
+});
+function saveNick(){ const i = $("#nick"); if (i) { nick = cleanNick(i.value); ls.set("vgm.nick", nick); } }
+
+/* ---------- arranque ---------- */
+const hashCode = (location.hash || "").replace("#", "").toUpperCase();
+if (/^[A-Z0-9]{4}$/.test(hashCode)) {
+  let mine = null; try { mine = JSON.parse(ls.get("vgm.host") || "null"); } catch {}
+  if (mine && mine.code === hashCode) {
+    S = mine.S || null; voters = mine.voters || {}; if (mine.setup) setup = mine.setup;
+    for (const v of Object.values(voters)) v.on = false;
+    startHost(hashCode);
+  } else if (nick) startGuest(hashCode);
+  else { ls.set("vgm.lastcode", hashCode); render(); toast("Escribe tu nombre y pulsa Entrar"); }
+} else render();
+})();
+</script>
+</body>
+</html>
