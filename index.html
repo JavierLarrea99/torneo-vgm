@@ -285,7 +285,11 @@ function tally(){
 }
 
 /* ---------- red (PeerJS) ---------- */
-const peerOpts = {debug: 0, config: {iceServers: [{urls: "stun:stun.l.google.com:19302"}, {urls: "stun:global.stun.twilio.com:3478"}]}};
+const TURN = {username: "openrelayproject", credential: "openrelayproject"};
+const peerOpts = {debug: 0, config: {iceCandidatePoolSize: 4, iceServers: [
+  {urls: "stun:stun.l.google.com:19302"}, {urls: "stun:global.stun.twilio.com:3478"}, {urls: "stun:openrelay.metered.ca:80"},
+  {urls: ["turn:openrelay.metered.ca:80", "turn:openrelay.metered.ca:443", "turn:openrelay.metered.ca:443?transport=tcp", "turns:openrelay.metered.ca:443?transport=tcp"], ...TURN}
+]}};
 
 function broadcast(){
   if (role !== "host") return;
@@ -362,7 +366,12 @@ function connectToHost(){
   try { if (hostConn) hostConn.close(); } catch {}
   hostConn = peer.connect(PEER_PREFIX + code, {reliable: true});
   const c = hostConn;
-  c.on("open", () => { setNet(); c.send({t:"hello", id: myId, nick: nick || "Jugador"}); });
+  setNet("Conectando…");
+  const slow = setTimeout(() => { if (c === hostConn && !c.open) { setNet("Sin respuesta… reintentando"); try { c.close(); } catch {} scheduleReconnect(); } }, 15000);
+  c.on("open", () => {
+    clearTimeout(slow); setNet(); c.send({t:"hello", id: myId, nick: nick || "Jugador"});
+    const hi = setInterval(() => { if (c !== hostConn || !c.open) return clearInterval(hi); if (!S) { try { c.send({t:"hello", id: myId, nick: nick || "Jugador"}); } catch {} } else clearInterval(hi); }, 3000);
+  });
   c.on("data", d => {
     if (!d || d.t !== "state") return;
     const prevKey = S ? keyOf(S) : null;
