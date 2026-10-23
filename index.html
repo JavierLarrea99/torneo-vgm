@@ -249,6 +249,26 @@ textarea#lib{width:100%;min-height:420px;background:var(--panel);border:1px soli
 .mini .res .a{border-color:var(--p1)} .mini .res .b{border-color:var(--p2)}
 .mini .res strong{font-family:var(--display);font-size:30px;display:block}
 
+.tug{width:100%;padding:52px 16px 14px;display:grid;gap:8px}
+.tugbar{position:relative;height:30px;background:linear-gradient(90deg,var(--p1) 0 50%,var(--p2) 50% 100%);border:2px solid #000}
+.tugbar::before,.tugbar::after{content:"";position:absolute;top:-6px;bottom:-6px;width:4px;background:#fff}
+.tugbar::before{left:0} .tugbar::after{right:0}
+.tugbar .flag{position:absolute;top:-14px;width:10px;height:54px;background:var(--gold);left:50%;transform:translateX(-50%);transition:left .12s linear;box-shadow:0 0 0 2px #000}
+.tugl{display:flex;justify-content:space-between;gap:10px;font-weight:700;font-size:14px}
+.tugl .a{color:var(--p1)} .tugl .b{color:var(--p2);text-align:right}
+.tugbtn.b{background:var(--p2);box-shadow:0 10px 0 color-mix(in srgb,var(--p2) 50%,#000)}
+.turf{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;padding:44px 10px 8px;width:min(100%,400px);margin:0 auto}
+.cell{aspect-ratio:1;border:0;background:#2b2550;cursor:pointer;transition:background .12s}
+.cell:disabled{cursor:default}
+.cell.a{background:var(--p1)} .cell.b{background:var(--p2)}
+.buzz{width:100%;padding:44px 12px 12px;display:grid;gap:10px}
+.buzz .bq{font-family:var(--display);font-size:clamp(20px,5vw,30px);line-height:1.15}
+.buzz .opts{padding:0}
+.buzz .opts button{font-family:var(--body);font-weight:700;font-size:16px;padding:14px 10px}
+.buzz .opts button.ok{background:var(--ok);color:#06210f;border-color:var(--ok)}
+.buzz .opts button:disabled{opacity:.55;cursor:default}
+.buzz .opts button.ok:disabled{opacity:1}
+.buzz .bmsg{min-height:22px;font-weight:700;color:var(--gold)}
 .toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:9px 14px;font-weight:600;font-size:14px;z-index:9;max-width:calc(100% - 32px)}
 
 @media (max-width:760px){
@@ -547,6 +567,8 @@ function onHostData(c, d){
     if (changed.length) { sendAll({t:"hist", recs: changed}); if (tab === "top") render(); }
   } else if (d.t === "mini" && voters[id]) {
     miniSubmit(id, d.mid, d.sc);
+  } else if (d.t === "mact" && voters[id]) {
+    teamAct(id, d);
   } else if (d.t === "vote" && voters[id] && S && S.status === "voting") {
     if (d.k === keyOf(S) && (d.s === "a" || d.s === "b" || d.s === null)) { voters[id].k = d.s ? d.k : null; voters[id].s = d.s; broadcast(); renderLive(); }
   } else if (d.t === "nick" && voters[id]) {
@@ -586,6 +608,7 @@ function connectToHost(){
   c.on("data", d => {
     if (!d) return;
     if (d.t === "hist") { if (histMerge(d.recs).length && tab === "top") render(); return; }
+    if (d.t === "live") { liveIn(d); return; }
     if (d.t !== "state") return;
     const prevKey = S ? keyOf(S) : null, prevDone = !!S && S.status === "done";
     S = d.S || null; voters = d.voters || {};
@@ -604,6 +627,7 @@ function send(msg){
 }
 function onHostLocal(msg){
   if (msg.t === "mini") { miniSubmit(myId, msg.mid, msg.sc); return; }
+  if (msg.t === "mact") { teamAct(myId, msg); return; }
   if (msg.t === "vote" && S && S.status === "voting") { voters[myId].k = msg.s ? msg.k : null; voters[myId].s = msg.s; }
   if (msg.t === "nick") voters[myId].nick = cleanNick(msg.nick) || "Anfitrión";
   broadcast(); renderLive();
@@ -638,7 +662,7 @@ function closeVoting(){
 }
 function setWinner(n, side){ const {r, m} = n.cur; n.rounds[r+1][m] = n.rounds[r][2*m + (side === "a" ? 0 : 1)]; n.status = "reveal"; }
 function pickWinner(side, how){
-  clearTimeout(miniTimer);
+  clearTimeout(miniTimer); stopTeamRun();
   act(n => {
     setWinner(n, side);
     if (how) { n.miniLog = n.miniLog || {}; n.miniLog[n.cur.r + "-" + n.cur.m] = {g: how, w: side}; }
@@ -651,7 +675,7 @@ function coinFlip(why){
   pickWinner(side, "coin");
 }
 function reopen(){
-  clearTimeout(miniTimer);
+  clearTimeout(miniTimer); stopTeamRun();
   act(n => { const {r, m} = n.cur, key = r + "-" + m; n.rounds[r+1][m] = null; delete n.scores[key]; if (n.who) delete n.who[key]; if (n.miniLog) delete n.miniLog[key]; n.reveal = null; n.mini = null; n.status = "voting"; });
   recordProgress(); renderStageState(); renderLive();
 }
@@ -850,6 +874,197 @@ function runBrain(ar, R, done){
   return () => { clearInterval(iv); ar.removeEventListener("click", onClick); };
 }
 
+/* ---------- minijuegos por equipos en tiempo real (el anfitrión manda) ---------- */
+const teamNames = () => { const [ia, ib] = pair(S, S.cur.r, S.cur.m); return {a: S.songs[ia][1], b: S.songs[ib][1]}; };
+const TEAM_GAMES = [
+  {id:"tug", team:true, secs:20, name:"Tira y afloja", ref:"Inspirado en los minijuegos por equipos de Mario Party",
+   how:"Los dos equipos tiran de la misma cuerda a la vez. Pulsa ¡TIRA! (o la barra espaciadora) sin parar para arrastrar la bandera a tu lado. Gana quien la lleve hasta su meta o la tenga más cerca al acabar el tiempo. Cuenta la media del equipo: da igual cuántos seáis.",
+   init: () => ({pos: 0}),
+   act(L, side, pid, a, T){
+     if (!a || a.k !== "tap") return;
+     const now = performance.now(); if (now - (T.last[pid] || 0) < 80) return; T.last[pid] = now;
+     const n = Math.max(0, Math.min(4, a.n | 0));
+     L.pos = Math.max(-100, Math.min(100, L.pos + (side === "a" ? -1 : 1) * n * 1.7 / T.size[side]));
+   },
+   done: L => Math.abs(L.pos) >= 100,
+   result: L => ({a: Math.round(50 - L.pos / 2), b: Math.round(50 + L.pos / 2)}),
+   pub: L => ({pos: Math.round(L.pos * 10) / 10}),
+   build(ar, my, emit){
+     const N = teamNames();
+     ar.innerHTML = `<div class="hud"><span>Tiempo <b class="tt">20</b>s</span><span>${my ? "Tiras por <b>" + esc(N[my]) + "</b>" : "Mirando"}</span></div>
+       <div class="tug"><div class="tugbar"><i class="flag"></i></div><div class="tugl"><span class="a">◀ ${esc(N.a)}</span><span class="b">${esc(N.b)} ▶</span></div>
+       ${my ? `<div style="display:grid;place-items:center;padding-top:10px"><button class="mashbtn tugbtn ${my}" type="button">¡TIRA!</button></div>` : ""}</div>`;
+     if (!my) return () => {};
+     let n = 0, tot = 0;
+     const tap = () => { n++; tot++; if (tot % 6 === 0) SFX.play("tick"); };
+     const btn = ar.querySelector(".tugbtn"); btn.addEventListener("pointerdown", tap);
+     const offK = onKey(tap);
+     const iv = setInterval(() => { if (n) { emit({k: "tap", n: Math.min(n, 4)}); n = Math.max(0, n - 4); } }, 100);
+     return () => { clearInterval(iv); offK(); };
+   },
+   paint(ar, P){
+     const f = ar.querySelector(".flag"); if (f) f.style.left = (50 + P.pos / 2) + "%";
+     const t = ar.querySelector(".tt"); if (t) t.textContent = P.left;
+   }},
+
+  {id:"turf", team:true, secs:20, name:"Combate territorial", ref:"Inspirado en Splatoon",
+   how:"Toca el tablero para pintarlo con la tinta de tu equipo (cada toque pinta una cruz y puedes pintar encima de la del rival). Hay una pequeña recarga entre disparos, más larga cuanto más grande es tu equipo, para que sea justo. Gana el equipo con más casillas pintadas.",
+   init: () => ({cells: Array(49).fill("")}),
+   act(L, side, pid, a, T){
+     if (!a || a.k !== "paint") return;
+     const i = a.i | 0; if (i < 0 || i > 48) return;
+     const now = performance.now(), cd = 260 * T.size[side];
+     if (now - (T.last[pid] || -1e9) < cd) return; T.last[pid] = now;
+     const r = Math.floor(i / 7), c = i % 7;
+     [[0,0],[1,0],[-1,0],[0,1],[0,-1]].forEach(([dr, dc]) => { const rr = r + dr, cc = c + dc; if (rr >= 0 && rr < 7 && cc >= 0 && cc < 7) L.cells[rr * 7 + cc] = side; });
+   },
+   result: L => ({a: L.cells.filter(x => x === "a").length, b: L.cells.filter(x => x === "b").length}),
+   pub: L => ({cells: L.cells.map(x => x || "-").join("")}),
+   build(ar, my, emit){
+     const N = teamNames();
+     ar.innerHTML = `<div class="hud"><span>Tiempo <b class="tt">20</b>s</span><span><b class="ca" style="color:var(--p1)">0</b> – <b class="cb" style="color:var(--p2)">0</b></span></div>
+       <div class="turf">${Array.from({length: 49}, (_, i) => `<button class="cell" type="button" data-i="${i}" aria-label="Casilla ${i+1}" ${my ? "" : "disabled"}></button>`).join("")}</div>
+       <div class="sub" style="padding-bottom:8px">${my ? "Pintas para <b>" + esc(N[my]) + "</b>" : "Mirando"}</div>`;
+     if (!my) return () => {};
+     const down = e => { const b = e.target.closest(".cell"); if (!b) return; emit({k: "paint", i: +b.dataset.i}); SFX.play("hit"); };
+     ar.addEventListener("pointerdown", down);
+     return () => ar.removeEventListener("pointerdown", down);
+   },
+   paint(ar, P){
+     const cells = ar.querySelectorAll(".cell"); let a = 0, b = 0;
+     for (let i = 0; i < cells.length; i++) { const v = P.cells[i]; cells[i].className = "cell" + (v === "a" ? " a" : v === "b" ? " b" : ""); if (v === "a") a++; else if (v === "b") b++; }
+     ar.querySelector(".ca").textContent = a; ar.querySelector(".cb").textContent = b;
+     const t = ar.querySelector(".tt"); if (t) t.textContent = P.left;
+   }},
+
+  {id:"buzz", team:true, secs:75, name:"¿De qué juego es?", ref:"Concurso por equipos inspirado en Buzz!",
+   how:"Sale el nombre de una canción y cuatro juegos. El primer equipo que acierte se lleva el punto. Ojo: si alguien de tu equipo falla, tu equipo queda bloqueado en esa pregunta. 5 preguntas: poneos de acuerdo antes de pulsar.",
+   init(M, R){
+     const seen = new Set(), pool = [...library, ...DEFAULT_SONGS].filter(s => { const k = s[0] + "|" + s[1]; if (seen.has(k)) return false; seen.add(k); return true; });
+     const cnt = new Map(); pool.forEach(s => cnt.set(s[1], (cnt.get(s[1]) || 0) + 1));
+     const games = [...new Set(pool.map(s => s[0]))];
+     const ok = pool.filter(s => cnt.get(s[1]) === 1 && !/theme|prelude/i.test(s[1]));
+     const used = new Set(), qs = [];
+     for (let k = 0; k < 60 && qs.length < 5 && ok.length; k++) {
+       const s = ok[Math.floor(R() * ok.length)]; if (used.has(s[1])) continue; used.add(s[1]);
+       const opts = new Set([s[0]]); let g = 0;
+       while (opts.size < 4 && g++ < 200) opts.add(games[Math.floor(R() * games.length)]);
+       const arr = [...opts]; for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; }
+       qs.push({song: s[1], opts: arr, ans: arr.indexOf(s[0])});
+     }
+     return {qs, qi: 0, lock: {a: false, b: false}, pts: {a: 0, b: 0}, msg: "", reveal: -1, wait: 0, qStart: 0, now: 0, over: false};
+   },
+   tick(L, pe){
+     L.now = pe;
+     if (L.over) return;
+     if (L.wait) { if (pe >= L.wait) { L.qi++; L.wait = 0; L.reveal = -1; L.msg = ""; L.lock = {a: false, b: false}; L.qStart = pe; if (L.qi >= L.qs.length) L.over = true; } return; }
+     if (!L.qs[L.qi]) { L.over = true; return; }
+     if (pe - L.qStart >= 12) { L.reveal = L.qs[L.qi].ans; L.msg = "Nadie acierta a tiempo."; L.wait = pe + 2.2; }
+   },
+   act(L, side, pid, a){
+     if (!a || a.k !== "ans" || L.over || L.wait || a.q !== L.qi || L.lock[side]) return;
+     const q = L.qs[L.qi], N = teamNames();
+     if ((a.o | 0) === q.ans) { L.pts[side]++; L.reveal = q.ans; L.msg = "¡Punto para el equipo " + N[side] + "!"; L.wait = L.now + 2.2; }
+     else { L.lock[side] = true; L.msg = "El equipo " + N[side] + " falla y queda bloqueado."; if (L.lock.a && L.lock.b) { L.reveal = q.ans; L.msg = "Fallan los dos equipos."; L.wait = L.now + 2.2; } }
+   },
+   done: L => L.over,
+   result: L => ({a: L.pts.a, b: L.pts.b}),
+   pub(L){
+     const q = L.qs[Math.min(L.qi, L.qs.length - 1)];
+     return {qi: L.qi, qn: L.qs.length, q: q ? {song: q.song, opts: q.opts} : null, lock: L.lock, pts: L.pts, msg: L.msg, reveal: L.reveal, ql: L.wait ? 0 : Math.max(0, Math.ceil(12 - (L.now - L.qStart)))};
+   },
+   build(ar, my, emit){
+     const N = teamNames();
+     ar.innerHTML = `<div class="hud"><span>Pregunta <b class="qn">1</b>/5 · <b class="ql">12</b>s</span><span><b class="pa" style="color:var(--p1)">0</b> – <b class="pb" style="color:var(--p2)">0</b></span></div>
+       <div class="buzz"><div class="bq"></div><div class="opts bo"></div><div class="bmsg"></div><div class="sub">${my ? "Respondes por <b>" + esc(N[my]) + "</b>" : "Mirando"}</div></div>`;
+     ar._q = -1;
+     if (!my) return () => {};
+     const click = e => { const b = e.target.closest(".bo button"); if (!b || b.disabled) return; emit({k: "ans", q: ar._q, o: +b.dataset.o}); };
+     ar.addEventListener("click", click);
+     return () => ar.removeEventListener("click", click);
+   },
+   paint(ar, P, my){
+     if (!P.q) return;
+     ar.querySelector(".qn").textContent = Math.min(P.qi + 1, P.qn);
+     ar.querySelector(".ql").textContent = P.ql;
+     ar.querySelector(".pa").textContent = P.pts.a; ar.querySelector(".pb").textContent = P.pts.b;
+     ar.querySelector(".bmsg").textContent = P.msg;
+     if (ar._q !== P.qi) { ar._q = P.qi; ar.querySelector(".bq").innerHTML = `¿De qué juego es <span style="color:var(--gold)">«${esc(P.q.song)}»</span>?`; ar.querySelector(".bo").innerHTML = P.q.opts.map((o, i) => `<button type="button" data-o="${i}">${esc(o)}</button>`).join(""); }
+     const prevMsg = ar._msg; ar._msg = P.msg;
+     if (P.msg && P.msg !== prevMsg) SFX.play(P.reveal >= 0 && /Punto/.test(P.msg) ? "win" : "miss");
+     ar.querySelectorAll(".bo button").forEach((b, i) => { b.disabled = !my || P.reveal >= 0 || (my && P.lock[my]); b.classList.toggle("ok", P.reveal === i); });
+   }},
+];
+MINIGAMES.push(...TEAM_GAMES);
+
+/* anfitrión: bucle del minijuego por equipos */
+const TEAM_INTRO = 7;
+let teamRun = null;
+function stopTeamRun(){ if (teamRun) clearInterval(teamRun.iv); teamRun = null; }
+function startTeamRun(M, G){
+  stopTeamRun();
+  const size = {a: 0, b: 0}; Object.values(M.teams).forEach(s => size[s]++);
+  teamRun = {mid: M.id, G, L: G.init(M, rng(M.seed)), size, t0: performance.now(), phase: "intro", last: {}};
+  teamRun.iv = setInterval(teamTick, 120);
+  teamTick();
+}
+function teamTick(){
+  const T = teamRun;
+  if (!T || role !== "host" || !S || S.status !== "mini" || !S.mini || S.mini.id !== T.mid) { stopTeamRun(); return; }
+  const el = (performance.now() - T.t0) / 1000;
+  let left;
+  if (el < TEAM_INTRO) { T.phase = "intro"; left = Math.ceil(TEAM_INTRO - el); }
+  else {
+    if (T.phase === "intro") { T.phase = "play"; T.p0 = performance.now(); }
+    const pe = (performance.now() - T.p0) / 1000;
+    if (T.G.tick) T.G.tick(T.L, pe);
+    left = Math.max(0, Math.ceil(T.G.secs - pe));
+    if (left <= 0 || (T.G.done && T.G.done(T.L))) {
+      T.phase = "end"; publishLive(T, 0);
+      const r = T.G.result(T.L), mid = T.mid; stopTeamRun();
+      setTimeout(() => finishMini(mid, r), 1800);
+      return;
+    }
+  }
+  publishLive(T, left);
+}
+function publishLive(T, left){
+  const P = Object.assign({phase: T.phase, left}, T.G.pub(T.L));
+  sendAll({t: "live", mid: T.mid, P});
+  liveIn({mid: T.mid, P});
+}
+function teamAct(pid, d){
+  const T = teamRun;
+  if (!T || !S || !S.mini || !d || d.mid !== T.mid || T.phase !== "play") return;
+  const side = S.mini.teams[pid]; if (!side) return;
+  try { T.G.act(T.L, side, pid, d.a, T); } catch {}
+}
+
+/* cada jugador: pinta el estado que manda el anfitrión */
+let liveView = null;
+function liveIn(d){
+  if (!d || !d.P || !S || !S.mini || S.mini.id !== d.mid) return;
+  liveView = d; paintTeam();
+}
+function paintTeam(){
+  const M = S && S.status === "mini" ? S.mini : null;
+  if (!M || !liveView || liveView.mid !== M.id || !miniLocal || miniLocal.mid !== M.id) return;
+  const G = gameById(M.g); if (!G || !G.team) return;
+  const P = liveView.P, my = M.teams[myId], stage = $("#miniStage"); if (!stage) return;
+  if (P.phase === "intro") {
+    const c = $("#miniCount");
+    if (c && c.textContent !== String(P.left)) { c.textContent = P.left; if (P.left <= 3) SFX.play("tick"); }
+    return;
+  }
+  if (!miniLocal.built) {
+    miniLocal.built = true; SFX.play("go");
+    stage.innerHTML = `<div class="arena" id="arena"></div>`;
+    miniLocal.cleanup = G.build($("#arena"), my, a => send({t: "mact", mid: M.id, a}));
+  }
+  const ar = $("#arena"); if (ar) G.paint(ar, P, my);
+  if (P.phase === "end" && !miniLocal.ended) { miniLocal.ended = true; if (miniLocal.cleanup) { try { miniLocal.cleanup(); } catch {} miniLocal.cleanup = null; } SFX.play("go"); }
+}
+
 /* lado del anfitrión */
 let miniTimer = null;
 function startMini(tried){
@@ -870,9 +1085,10 @@ function startMini(tried){
   const teams = {}; A.forEach(id => teams[id] = "a"); B.forEach(id => teams[id] = "b");
   const seed = crypto.getRandomValues(new Uint32Array(1))[0];
   act(n => { n.status = "mini"; n.mini = {id: rid(6), g: G.id, seed, teams, res: {}, tried: [...tried, G.id], mixed}; });
-  clearTimeout(miniTimer);
+  clearTimeout(miniTimer); stopTeamRun();
   const mid = S.mini.id;
-  miniTimer = setTimeout(() => finishMini(mid), (G.dur + 16) * 1000);
+  if (G.team) startTeamRun(S.mini, G);
+  else miniTimer = setTimeout(() => finishMini(mid), (G.dur + 16) * 1000);
   renderStageState(); renderLive();
 }
 function miniSubmit(pid, mid, sc){
@@ -888,10 +1104,10 @@ function teamAvg(M, side){
   if (!ids.length) return 0;
   return Math.round(ids.reduce((s, id) => s + (M.res[id] || 0), 0) / ids.length * 10) / 10;
 }
-function finishMini(mid){
+function finishMini(mid, ov){
   if (role !== "host" || !S || S.status !== "mini" || !S.mini || S.mini.id !== mid) return;
-  clearTimeout(miniTimer);
-  const M = S.mini, a = teamAvg(M, "a"), b = teamAvg(M, "b");
+  clearTimeout(miniTimer); stopTeamRun();
+  const M = S.mini, a = ov ? ov.a : teamAvg(M, "a"), b = ov ? ov.b : teamAvg(M, "b");
   if (a === b) {
     if (M.tried.length < 3) { toast("¡Empate también en el minijuego! Va otro."); startMini(M.tried); }
     else coinFlip("Empate en 3 minijuegos seguidos");
@@ -930,7 +1146,10 @@ function syncMini(){
     </div>`;
     miniLocal = {mid: M.id, timers: [], cleanup: null};
     const stage = $("#miniStage");
-    if (my && M.res[myId] === undefined) {
+    if (G.team) {
+      stage.innerHTML = `<p class="how">${esc(G.how)}</p><p>${my ? "Juegas por " + teamTag(my) + (M.mixed ? " (equipos sorteados)" : "") : "Miras: " + teamTag("a") + " contra " + teamTag("b")}</p><div class="count" id="miniCount">${TEAM_INTRO}</div>`;
+      paintTeam();
+    } else if (my && M.res[myId] === undefined) {
       stage.innerHTML = `<p class="how">${esc(G.how)}</p><p>Juegas por ${teamTag(my)}${M.mixed ? " (equipos sorteados)" : ""}</p><div class="count" id="miniCount">3</div>`;
       const loc = miniLocal;
       let c = 3; SFX.play("tick");
@@ -1280,7 +1499,7 @@ document.addEventListener("click", e => {
     case "show-top": tab = "top"; render(); break;
     case "home": tab = "duel"; render(); break;
     case "mini": if (S && S.status === "tie") startMini([]); break;
-    case "mini-end": if (S && S.mini) finishMini(S.mini.id); break;
+    case "mini-end": if (S && S.mini) finishMini(S.mini.id, teamRun && teamRun.mid === S.mini.id && teamRun.phase === "play" ? teamRun.G.result(teamRun.L) : undefined); break;
     case "mini-coin": coinFlip(""); break;
     case "size": setup.size = +el.dataset.v; render(); break;
     case "order": setup.order = el.dataset.v; render(); break;
@@ -1302,7 +1521,7 @@ document.addEventListener("click", e => {
     case "man": adjustManual(el.dataset.side, +el.dataset.d); break;
     case "reset": confirmReset = true; if (S && S.status === "done") render(); else renderStageState(); break;
     case "reset-no": confirmReset = false; if (S && S.status === "done") render(); else renderStageState(); break;
-    case "reset-yes": confirmReset = false; clearTimeout(miniTimer); S = null; closeMiniLayer(); for (const v of Object.values(voters)) { v.k = null; v.s = null; } broadcast(); tab = "duel"; render(); break;
+    case "reset-yes": confirmReset = false; clearTimeout(miniTimer); stopTeamRun(); S = null; closeMiniLayer(); for (const v of Object.values(voters)) { v.k = null; v.s = null; } broadcast(); tab = "duel"; render(); break;
     case "rtab": bracketRound = +el.dataset.v; render(); break;
     case "lib-save": {
       const songs = parseLib($("#lib").value);
