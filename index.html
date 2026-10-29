@@ -299,6 +299,7 @@ textarea#lib{width:100%;min-height:420px;background:var(--panel);border:1px soli
 <div class="toast" id="toast" hidden></div>
 
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js"></script>
 <script>
 (() => {
 "use strict";
@@ -527,31 +528,32 @@ function startHost(existing){
   voters[myId].on = true; voters[myId].nick = nick || "Anfitrión";
   history.replaceState(null, "", "#" + code);
   render();
+  startHostRelay();
   openHostPeer();
 }
+function setupHostConn(c){
+  c.on("open", () => { conns.set(c.peer, c); });
+  c.on("data", d => onHostData(c, d));
+  c.on("close", () => { if (conns.get(c.peer) === c) conns.delete(c.peer); for (const v of Object.values(voters)) if (v.peer === c.peer) v.on = false; broadcast(); renderLive(); setNet(); updateMiniProgress(); });
+  c.on("error", () => {});
+}
 function openHostPeer(){
-  if (typeof Peer === "undefined") { toast("No se pudo cargar la conexión online. Revisa tu internet."); setNet("Sin conexión"); return; }
-  setNet("Abriendo sala…");
+  if (typeof Peer === "undefined") { setNet(); return; }
   try { if (peer) peer.destroy(); } catch {}
   peer = new Peer(PEER_PREFIX + code, peerOpts);
   peer.on("open", () => { setNet(); broadcast(); render(); });
-  peer.on("connection", c => {
-    c.on("open", () => { conns.set(c.peer, c); });
-    c.on("data", d => onHostData(c, d));
-    c.on("close", () => { conns.delete(c.peer); for (const v of Object.values(voters)) if (v.peer === c.peer) v.on = false; broadcast(); renderLive(); setNet(); });
-    c.on("error", () => {});
-  });
-  peer.on("disconnected", () => { setNet("Reconectando…"); setTimeout(() => { try { peer.reconnect(); } catch {} }, 1500); });
+  peer.on("connection", setupHostConn);
+  peer.on("disconnected", () => { setTimeout(() => { try { peer.reconnect(); } catch {} }, 1500); });
   peer.on("error", e => {
     if (e.type === "unavailable-id") {
-      if (!ls.get("vgm.host")) { code = rid(4); history.replaceState(null, "", "#" + code); }
+      if (!ls.get("vgm.host")) { code = rid(4); history.replaceState(null, "", "#" + code); startHostRelay(); render(); }
       setTimeout(openHostPeer, 3000);
-      setNet("Esperando la sala…");
     } else if (e.type === "network" || e.type === "server-error" || e.type === "socket-error" || e.type === "socket-closed") {
-      setNet("Reconectando…"); setTimeout(openHostPeer, 4000);
+      setTimeout(openHostPeer, 4000);
     }
   });
 }
+
 function onHostData(c, d){
   if (!d || typeof d !== "object") return;
   const id = typeof d.id === "string" ? d.id.slice(0, 20) : null;
@@ -561,7 +563,7 @@ function onHostData(c, d){
     if (!prev.on) SFX.play("join");
     voters[id] = {nick: cleanNick(d.nick) || "Jugador", k: prev.k, s: prev.s, on: true, peer: c.peer};
     broadcast(); renderLive(); setNet(); updateMiniProgress();
-    if (d.first) { try { c.send({t:"hist", recs: Object.values(hist)}); } catch {} }
+    if (d.first) sendHistTo(c);
   } else if (d.t === "hist") {
     const changed = histMerge(d.recs);
     if (changed.length) { sendAll({t:"hist", recs: changed}); if (tab === "top") render(); }
@@ -576,37 +578,155 @@ function onHostData(c, d){
   }
 }
 
+/* ---------- plan B: relé por servidor MQTT público cuando la conexión directa no sale ---------- */
+const BROKERS = ["wss://broker.emqx.io:8084/mqtt", "wss://broker.hivemq.com:8884/mqtt", "wss://test.mosquitto.org:8081"];
+const relayBase = c => "torneovgm/v2/" + c;
+const FORCE_RELAY = /[?&]relay=1/.test(location.search);
+const mqttReady = () => typeof mqtt !== "undefined" && typeof mqtt.connect === "function";
+function mqttClient(url){ return mqtt.connect(url, {clientId: "tvgm_" + rid(12), clean: true, reconnectPeriod: 3000, connectTimeout: 7000, keepalive: 30}); }
+class RelayConn {
+  constructor(client, peerName, sendFn){ this.client = client; this.peer = peerName; this.open = false; this.h = {}; this.relay = true; this.seen = Date.now(); this._send = sendFn; }
+  on(e, f){ this.h[e] = f; return this; }
+  emit(e, x){ try { this.h[e] && this.h[e](x); } catch (err) { console.error(err); } }
+  send(d){ if (this.open) this._send(d); }
+  close(){ if (!this.open) return; this.open = false; this.emit("close"); }
+}
+const pub = (cl, topic, obj) => { try { cl.publish(topic, JSON.stringify(obj)); } catch {} };
+
+/* anfitrión: escucha en los tres servidores a la vez */
+let relayClients = [], relayConns = new Map(), relayIv = null, relayUp = 0;
+function stopHostRelay(){
+  clearInterval(relayIv); relayIv = null;
+  for (const rc of relayConns.values()) rc.close();
+  relayConns.clear();
+  for (const cl of relayClients) { try { cl.end(true); } catch {} }
+  relayClients = []; relayUp = 0;
+}
+function startHostRelay(){
+  stopHostRelay();
+  if (!mqttReady() || !code) return;
+  const base = relayBase(code), myCode = code;
+  for (const url of BROKERS) {
+    let cl; try { cl = mqttClient(url); } catch { continue; }
+    let up = false;
+    cl.on("connect", () => { cl.subscribe(base + "/up", {qos: 0}); if (!up) { up = true; relayUp++; setNet(); } });
+    cl.on("close", () => { if (up) { up = false; relayUp = Math.max(0, relayUp - 1); setNet(); } });
+    cl.on("error", () => {});
+    cl.on("message", (topic, buf) => {
+      if (code !== myCode) return;
+      let m; try { m = JSON.parse(buf.toString()); } catch { return; }
+      const gid = typeof m.from === "string" && /^[A-Za-z0-9]{4,24}$/.test(m.from) ? m.from : null; if (!gid) return;
+      const out = base + "/down/" + gid;
+      let rc = relayConns.get(gid);
+      if (m.k === "open") {
+        if (rc && rc.client !== cl) { relayConns.delete(gid); rc.close(); rc = null; }
+        if (!rc) { rc = new RelayConn(cl, "mq-" + gid, d => pub(cl, out, {k: "d", d})); relayConns.set(gid, rc); setupHostConn(rc); }
+        rc.seen = Date.now();
+        pub(cl, out, {k: "ack"});
+        if (!rc.open) { rc.open = true; rc.emit("open"); }
+        return;
+      }
+      if (!rc || rc.client !== cl) { if (m.k === "d" || m.k === "ping") pub(cl, out, {k: "who"}); return; }
+      rc.seen = Date.now();
+      if (m.k === "d") rc.emit("data", m.d);
+      else if (m.k === "bye") { relayConns.delete(gid); rc.close(); }
+    });
+    relayClients.push(cl);
+  }
+  relayIv = setInterval(() => {
+    const now = Date.now();
+    for (const [gid, rc] of relayConns) {
+      if (now - rc.seen > 17000) { relayConns.delete(gid); rc.close(); }
+      else pub(rc.client, relayBase(code) + "/down/" + gid, {k: "ping"});
+    }
+  }, 5000);
+}
+
+/* invitado: prueba directo y, si no sale, por servidor */
+let relayMode = FORCE_RELAY, relayClient = null, relayHB = null;
+const relayGid = "g" + myId.replace(/[^A-Za-z0-9]/g, "").slice(0, 16);
+function stopGuestRelay(){
+  clearInterval(relayHB); relayHB = null;
+  if (relayClient) { try { pub(relayClient, relayBase(code) + "/up", {k: "bye", from: relayGid}); relayClient.end(true); } catch {} relayClient = null; }
+}
+function goRelay(why){
+  if (relayMode && relayClient) return;
+  relayMode = true;
+  const old = hostConn; hostConn = null;
+  try { if (old && !old.relay) old.close(); } catch {}
+  startGuestRelay(0);
+}
+function startGuestRelay(i){
+  clearTimeout(reconnectT);
+  if (!mqttReady()) { setNet("Sin conexión. Reintentando…"); reconnectT = setTimeout(() => startGuestRelay(0), 5000); return; }
+  stopGuestRelay();
+  if (i >= BROKERS.length) { setNet("El anfitrión no responde. Reintentando…"); reconnectT = setTimeout(() => startGuestRelay(0), 4000); return; }
+  setNet("Conectando por servidor…");
+  const base = relayBase(code), cl = mqttClient(BROKERS[i]); relayClient = cl;
+  const rc = new RelayConn(cl, "host", d => pub(cl, base + "/up", {k: "d", from: relayGid, d}));
+  let acked = false;
+  const fail = setTimeout(() => { if (!acked && relayClient === cl) startGuestRelay(i + 1); }, 8000);
+  cl.on("error", () => {});
+  cl.on("connect", () => {
+    cl.subscribe(base + "/down/" + relayGid, {qos: 0}, () => pub(cl, base + "/up", {k: "open", from: relayGid}));
+  });
+  cl.on("message", (topic, buf) => {
+    if (relayClient !== cl) return;
+    let m; try { m = JSON.parse(buf.toString()); } catch { return; }
+    rc.seen = Date.now();
+    if (m.k === "ack") { if (!acked) { acked = true; clearTimeout(fail); attachGuestConn(rc); rc.open = true; rc.emit("open"); } }
+    else if (m.k === "who") pub(cl, base + "/up", {k: "open", from: relayGid});
+    else if (m.k === "d") rc.emit("data", m.d);
+  });
+  relayHB = setInterval(() => {
+    if (relayClient !== cl) return;
+    if (!acked) return;
+    pub(cl, base + "/up", {k: "ping", from: relayGid});
+    if (Date.now() - rc.seen > 17000) { rc.close(); }
+  }, 5000);
+}
+function sendHistTo(c){
+  const recs = Object.values(hist);
+  for (let i = 0; i < recs.length; i += 6) { try { c.send({t: "hist", id: myId, recs: recs.slice(i, i + 6)}); } catch {} }
+}
+
 function startGuest(c){
   role = "guest"; code = c.toUpperCase();
   history.replaceState(null, "", "#" + code);
   ls.set("vgm.lastcode", code);
   render();
-  if (typeof Peer === "undefined") { toast("No se pudo cargar la conexión online. Revisa tu internet."); return; }
+  if (relayMode || typeof Peer === "undefined") { goRelay(); return; }
   setNet("Conectando…");
   peer = new Peer(undefined, peerOpts);
-  peer.on("open", connectToHost);
-  peer.on("disconnected", () => { setTimeout(() => { try { peer.reconnect(); } catch {} }, 1500); });
+  const noSignal = setTimeout(() => { if (!relayMode && !(hostConn && hostConn.open)) goRelay(); }, 7000);
+  peer.on("open", () => { clearTimeout(noSignal); connectToHost(); });
+  peer.on("disconnected", () => { if (!relayMode) setTimeout(() => { try { peer.reconnect(); } catch {} }, 1500); });
   peer.on("error", e => {
-    if (e.type === "peer-unavailable") { setNet("Sala no encontrada"); scheduleReconnect(); }
-    else if (["network","server-error","socket-error","socket-closed"].includes(e.type)) { setNet("Reconectando…"); scheduleReconnect(); }
+    if (relayMode) return;
+    if (e.type === "peer-unavailable" || ["network","server-error","socket-error","socket-closed","browser-incompatible","webrtc"].includes(e.type)) goRelay();
   });
 }
-function scheduleReconnect(){ clearTimeout(reconnectT); reconnectT = setTimeout(connectToHost, 3500); }
+function scheduleReconnect(){ clearTimeout(reconnectT); reconnectT = setTimeout(connectToHost, 3000); }
 function connectToHost(){
-  if (!peer || peer.destroyed) return;
+  if (relayMode) { startGuestRelay(0); return; }
+  if (!peer || peer.destroyed) { goRelay(); return; }
   if (peer.disconnected) { try { peer.reconnect(); } catch {} scheduleReconnect(); return; }
   try { if (hostConn) hostConn.close(); } catch {}
-  hostConn = peer.connect(PEER_PREFIX + code, {reliable: true});
-  const c = hostConn;
+  const c = peer.connect(PEER_PREFIX + code, {reliable: true});
   setNet("Conectando…");
-  const slow = setTimeout(() => { if (c === hostConn && !c.open) { setNet("Sin respuesta… reintentando"); try { c.close(); } catch {} scheduleReconnect(); } }, 15000);
+  attachGuestConn(c);
+  setTimeout(() => { if (c === hostConn && !c.open && !relayMode) goRelay(); }, 7000);
+}
+function attachGuestConn(c){
+  hostConn = c;
   c.on("open", () => {
-    clearTimeout(slow); setNet(); c.send({t:"hello", id: myId, nick: nick || "Jugador", first: true});
-    try { c.send({t:"hist", id: myId, recs: Object.values(hist)}); } catch {}
+    if (c !== hostConn) return;
+    setNet(); c.send({t:"hello", id: myId, nick: nick || "Jugador", first: true});
+    sendHistTo(c);
     const hi = setInterval(() => { if (c !== hostConn || !c.open) return clearInterval(hi); if (!S) { try { c.send({t:"hello", id: myId, nick: nick || "Jugador"}); } catch {} } else clearInterval(hi); }, 3000);
   });
   c.on("data", d => {
-    if (!d) return;
+    if (!d || c !== hostConn) return;
     if (d.t === "hist") { if (histMerge(d.recs).length && tab === "top") render(); return; }
     if (d.t === "live") { liveIn(d); return; }
     if (d.t !== "state") return;
@@ -639,8 +759,10 @@ function setNet(txt){
   nc.hidden = false;
   if (netOverride) { nc.className = "chip"; nc.textContent = netOverride; return; }
   const on = Object.values(voters).filter(v => v.on).length;
+  if (role === "guest" && !(hostConn && hostConn.open)) { nc.className = "chip"; nc.textContent = "Conectando…"; return; }
+  if (role === "host" && !(peer && peer.open) && !relayUp) { nc.className = "chip"; nc.textContent = "Abriendo sala…"; return; }
   nc.className = "chip live";
-  nc.innerHTML = (role === "host" ? "Anfitrión · " : "") + "<b>" + on + "</b> conectados";
+  nc.innerHTML = (role === "host" ? "Anfitrión · " : "") + "<b>" + on + "</b> conectados" + (role === "guest" && hostConn && hostConn.relay ? " · vía servidor" : "");
 }
 
 /* ---------- acciones del anfitrión ---------- */
