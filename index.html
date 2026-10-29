@@ -506,11 +506,8 @@ function topStats(){
 }
 
 /* ---------- red (PeerJS) ---------- */
-const TURN = {username: "openrelayproject", credential: "openrelayproject"};
-const peerOpts = {debug: 0, config: {iceCandidatePoolSize: 4, iceServers: [
-  {urls: "stun:stun.l.google.com:19302"}, {urls: "stun:global.stun.twilio.com:3478"}, {urls: "stun:openrelay.metered.ca:80"},
-  {urls: ["turn:openrelay.metered.ca:80", "turn:openrelay.metered.ca:443", "turn:openrelay.metered.ca:443?transport=tcp", "turns:openrelay.metered.ca:443?transport=tcp"], ...TURN}
-]}};
+/* el TURN gratuito de OpenRelay ya no funciona (comprobado): si la conexión directa falla se usa el relé MQTT */
+const peerOpts = {debug: 0, config: {iceServers: [{urls: "stun:stun.l.google.com:19302"}, {urls: "stun:global.stun.twilio.com:3478"}]}};
 
 function broadcast(){
   if (role !== "host") return;
