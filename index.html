@@ -180,7 +180,7 @@ textarea#lib{width:100%;min-height:420px;background:var(--panel);border:1px soli
 .who{display:flex;flex-wrap:wrap;gap:5px;align-items:center;min-height:26px;font-size:13px}
 .card.b .who{justify-content:flex-end}
 .who .lbl{font-family:var(--pixel);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
-.who .nm{padding:2px 8px;font-weight:700}
+.who .nm{padding:2px 8px;font-weight:700;display:inline-flex;align-items:center;gap:5px}
 .card.a .who .nm{background:color-mix(in srgb,var(--p1) 22%,var(--panel));border:1px solid var(--p1)}
 .card.b .who .nm{background:color-mix(in srgb,var(--p2) 22%,var(--panel));border:1px solid var(--p2)}
 .who .nm.me{outline:2px solid var(--gold)}
@@ -269,6 +269,25 @@ textarea#lib{width:100%;min-height:420px;background:var(--panel);border:1px soli
 .buzz .opts button:disabled{opacity:.55;cursor:default}
 .buzz .opts button.ok:disabled{opacity:1}
 .buzz .bmsg{min-height:22px;font-weight:700;color:var(--gold)}
+.lane{position:relative;width:min(100%,260px);height:300px;margin:40px auto 10px;border-left:2px solid var(--line);border-right:2px solid var(--line);overflow:hidden}
+.hitline{position:absolute;left:0;right:0;bottom:56px;height:6px;background:var(--gold)}
+.rnote{position:absolute;left:50%;top:0;width:54px;height:20px;margin-left:-27px;border-radius:10px;background:var(--p2);box-shadow:0 0 0 2px #000;display:none}
+.rfb{position:absolute;left:0;right:0;bottom:12px;font-family:var(--display);font-size:20px}
+.rfb.ok{color:var(--ok)} .rfb.bad{color:var(--p1)}
+.cards{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;padding:44px 12px 14px;width:100%}
+.card2{aspect-ratio:3/4;border:2px solid #000;background:repeating-linear-gradient(45deg,var(--p1) 0 8px,#c94549 8px 16px);font-size:clamp(20px,6vw,34px);cursor:pointer;display:grid;place-items:center;padding:0}
+.card2.up{background:#f4efe1}
+.card2.ok{background:#c9f3d8;outline:3px solid var(--ok)}
+.av{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;font-size:13px;line-height:1;flex:none;box-shadow:0 0 0 2px var(--c,#888);background:color-mix(in srgb,var(--c,#888) 30%,var(--panel))}
+.av.lg{width:64px;height:64px;font-size:36px;box-shadow:0 0 0 4px var(--c,#888)}
+.prof{display:grid;grid-template-columns:auto 1fr;gap:12px 16px;align-items:center;padding:14px;border:1px solid var(--line);background:var(--panel)}
+.prof .grid{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px}
+.prof .grid button{width:40px;height:40px;font-size:22px;border:1px solid var(--line);background:var(--bg);cursor:pointer;padding:0}
+.prof .grid button[aria-pressed="true"]{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold)}
+.prof .cols{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px}
+.prof .cols button{width:30px;height:30px;border-radius:50%;border:2px solid #000;cursor:pointer}
+.prof .cols button[aria-pressed="true"]{box-shadow:0 0 0 3px var(--fg)}
+.autonote{margin-top:12px;padding:8px 12px;border:1px dashed var(--gold);color:var(--gold);font-weight:700;font-size:14px}
 .toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:9px 14px;font-weight:600;font-size:14px;z-index:9;max-width:calc(100% - 32px)}
 
 @media (max-width:760px){
@@ -305,7 +324,7 @@ textarea#lib{width:100%;min-height:420px;background:var(--panel);border:1px soli
 "use strict";
 
 /* ---------- canciones por defecto: [juego, canción, [vídeos de YouTube]] ---------- */
-const DEFAULT_SONGS = [["The Legend of Zelda: Ocarina of Time", "Gerudo Valley", ["0hEYvdMoF2g"]], ["The Legend of Zelda: Ocarina of Time", "Song of Storms", ["UtgHZaq0EGs", "N3OZoErzJg0"]], ["The Legend of Zelda: Ocarina of Time", "Lost Woods (Saria's Song)", ["fER8zIAhRD0", "V9so9y-8Dgk"]], ["The Legend of Zelda: Majora's Mask", "Clock Town", ["K0kXVfqPrLs", "u2LEuANbk5s"]], ["The Legend of Zelda: The Wind Waker", "Dragon Roost Island", ["SXGGvsHq6iA", "SfaNKs2KZ1o"]], ["The Legend of Zelda: Twilight Princess", "Hyrule Field", ["t6JgG__XbRA", "7xf3b-dETYw"]], ["The Legend of Zelda: Skyward Sword", "Ballad of the Goddess", ["F-WToBQYZ_A", "v4ReyoNpyrM"]], ["The Legend of Zelda: Breath of the Wild", "Main Theme", ["tDkjr_cYO6M", "U_Mm4Tia9zI"]], ["The Legend of Zelda: Tears of the Kingdom", "Main Theme", ["n0tIW8vi0P0", "jW7LEygnsDc", "NSbQ5z4d9xY"]], ["Super Mario Bros.", "Overworld Theme", ["iy3qq7zc4EY"]], ["Super Mario World", "Overworld Theme", ["tAaGKo4XVvM", "8w4nvCAx45s"]], ["Super Mario 64", "Bob-omb Battlefield", ["bmP3UHXYi28", "2TcTc4YmS9c", "CrjzjD67TZk"]], ["Super Mario 64", "Dire, Dire Docks", ["Zqa2mgjbOIM", "piJG3oOXKVo"]], ["Super Mario Sunshine", "Delfino Plaza", ["uVCAnYTkyIo", "VAP8IUhU2kc"]], ["Super Mario Galaxy", "Gusty Garden Galaxy", ["1bvDHAUv2ak"]], ["Super Mario Galaxy", "Comet Observatory", ["wBhzmys2-eU", "mCd7jJePB0I"]], ["Super Mario Odyssey", "Jump Up, Super Star!", ["e9r5hx47kxM", "fbR_pCRPDTg", "gaW-hZUyhZc"]], ["Super Mario RPG", "Forest Maze", ["vkailb3xcTI", "3TeQ7jFDwF0"]], ["Mario Kart 64", "Rainbow Road", ["K5xdue7GFcc", "BukCo9ebcSc"]], ["Mario Kart Wii", "Coconut Mall", ["cscuCIzItZQ"]], ["Mario Kart 8", "Rainbow Road", ["R2QDnja3WKg", "pX1-EMO_2V4"]], ["Luigi's Mansion", "Main Theme", ["nrYC6Ww8shc", "0uaIuzOaWpk"]], ["Yoshi's Island", "Flower Garden", ["DTpksvCC-hg", "NsviiiqdsMM"]], ["Donkey Kong Country", "DK Island Swing", ["HG8YrDF6cDk", "QPmW6eLX5fw"]], ["Donkey Kong Country", "Aquatic Ambiance", ["1XM8ReW9NvA", "o38ldEK8FjE"]], ["Donkey Kong Country", "Gangplank Galleon", ["T0H_gtLBeFo"]], ["Donkey Kong Country 2", "Stickerbrush Symphony", ["mdPlcKg-qFs"]], ["Sonic the Hedgehog", "Green Hill Zone", ["G-i8HYi1QH0", "NaAb1s0MCQQ", "55uDJ39W4i0"]], ["Sonic the Hedgehog 2", "Chemical Plant Zone", ["-LYB7iLZNWE", "rkCqQBJ8hT4", "SrCgjGnlQRQ"]], ["Sonic CD", "Stardust Speedway (JP)", ["aAxSF4JESSU", "hJY73z2fQQs"]], ["Sonic Adventure", "Open Your Heart", ["JsL-5R76jFk", "uEzXFuYN89k", "4fo__Sh0nIg"]], ["Sonic Adventure 2", "Escape from the City", ["5WcyVvWZJU4", "qR6mTJRbcaE"]], ["Sonic Adventure 2", "Live and Learn", ["3gPBmDptqlQ", "sefGW__p6WE", "z1BRZg0GG0A"]], ["Sonic the Hedgehog (2006)", "His World", ["uBb3QU4r4KY", "BWWfjK0v8eM"]], ["Pokémon Rojo/Azul", "Pallet Town", ["cOWRNLaCMJg", "kO09V19wwlE"]], ["Pokémon Rojo/Azul", "Lavender Town", ["JNJJ-QkZ8cM", "9r76RJAN35Q"]], ["Pokémon Rojo/Azul", "Battle! (Wild Pokémon)", ["NrS523dOHU4", "LgK2f47q8cU"]], ["Pokémon Oro/Plata", "Goldenrod City", ["S1-VyHIx_SY", "DlqTD429kEM"]], ["Pokémon Diamante/Perla", "Battle! (Champion Cynthia)", ["rXefFHRgyE0", "Ql-TllQkoqM"]], ["Kirby's Dream Land", "Green Greens", ["twPSaCABakA", "yW1X28sp7v4"]], ["Kirby Super Star", "Gourmet Race", ["Se1uh3PS78Y", "Y7_zI7QFqu4"]], ["Kirby Super Star", "Revenge of Meta Knight", ["c_-huuSqn3w", "aD1R0romZ2s"]], ["Super Metroid", "Vs. Ridley", ["duftrIgy670"]], ["Metroid Prime", "Phendrana Drifts", ["ZbbUv1hz6mE", "oRZVPHMPYLQ"]], ["Star Fox 64", "Corneria", ["rcug6QTiJNI", "btL9yauabJg"]], ["F-Zero", "Big Blue", ["VEU7-9z7TMs", "H2yvU11in_w"]], ["F-Zero", "Mute City", ["wlxa4w-7DUI"]], ["Super Smash Bros. Brawl", "Main Theme", ["zeKE0NHUtUw", "3SYR4S1ZtQo"]], ["Super Smash Bros. Ultimate", "Lifelight", ["EhgDibw7vB4", "qiI7wTGV6Go"]], ["Banjo-Kazooie", "Spiral Mountain", ["IlzflkN7g-U", "b1cRQRdg62E"]], ["Banjo-Kazooie", "Treasure Trove Cove", ["wP8uBFQHSG4", "5DQfnj33-QU"]], ["Xenoblade Chronicles", "Gaur Plain", ["UDJtsfR51To", "LFrZo963D0s"]], ["Xenoblade Chronicles", "You Will Know Our Names", ["g7yNyhLOIa4", "7wtm_aeW8gM"]], ["Fire Emblem", "Fire Emblem Theme", ["pHGOlVRH7_8", "1Oetx3nQ3Bw"]], ["Splatoon", "Splattack!", ["LBQmvJyIKTg", "mSUcKnqzOKg"]], ["Splatoon 3", "Anarchy Rainbow", ["1b9G-zdG5V0", "DtMOAvOWTvY"]], ["EarthBound / MOTHER", "Pollyanna", ["XoSBRcQwocE", "w3NyycHR3fE"]], ["Pikmin", "Forest of Hope", ["HoMx0BTPVgE", "jc3gs7OJ0Jc"]], ["Animal Crossing: New Horizons", "Main Theme", ["yQwg_pQfZDA", "f0yelOf7rGI"]], ["Wii", "Mii Channel", ["po-0n1BKW2w", "eqtZPO7XSKk"]], ["Wii", "Wii Shop Channel", ["yyjUmv1gJEg"]], ["Wii Sports", "Title Theme", ["2qvAxPqy2wA", "diQEujrcFG0"]], ["Undertale", "Megalovania", ["0FCvzsVlXpQ", "KK3KXAECte4"]], ["Undertale", "Hopes and Dreams", ["wbO3p7_Mf30"]], ["Undertale", "Spear of Justice", ["XGzYhJcm-Jw"]], ["Undertale", "Bonetrousle", ["AKAiUtWZ4xY", "mLsWDkF_LIc"]], ["Undertale", "Fallen Down", ["qH5hM1ILuFQ"]], ["Deltarune", "Rude Buster", ["GPL5Hkl11IQ"]], ["Deltarune", "THE WORLD REVOLVING", ["Z01Tsgwe2dQ", "cfxTZ0aw6iY"]], ["Minecraft", "Sweden", ["xIQrC4CerB8", "aBkTkxKDduc"]], ["Minecraft", "Wet Hands", ["lq1vZxM-Iic", "mukiMaOSLEs"]], ["Minecraft", "Subwoofer Lullaby", ["o3_InDEtpLA", "Gpd85y_iTxY"]], ["Minecraft", "Pigstep", ["BTthtlT80Rc", "R9eC3WBRKeY"]], ["Terraria", "Overworld Day", ["Zmd43wV2Ko4", "x23I8f9PwlI"]], ["Stardew Valley", "Stardew Valley Overture", ["FQSHcl6TJb4", "1I7vAflFKS4"]], ["Celeste", "First Steps", ["N8OHSXvneOE", "Rm8hXsSyV0I"]], ["Celeste", "Resurrections", ["1rwAvUvvQzQ"]], ["Celeste", "Confronting Myself", ["b_oEDGONSc4", "0qbRhwEsX4A"]], ["Hollow Knight", "City of Tears", ["MJDn70jh1V0"]], ["Hollow Knight", "Hornet", ["7xkM8mWC4Kk"]], ["Hollow Knight", "Sealed Vessel", ["ze0Rk-m0w2A"]], ["Cuphead", "Floral Fury", ["2clUY-OsCpY", "qD54sROmeIM"]], ["Cuphead", "Don't Deal with the Devil", ["D4Hr0L9PrAg", "D6KXf-kXKIA"]], ["Hades", "In the Blood", ["ojx8dyes__8", "zzLP3w1brDY"]], ["Outer Wilds", "Travelers", ["z34enKCqRGk", "2RJtvhippL0"]], ["Journey", "Apotheosis", ["ypNgvc6c6Cc"]], ["Ori and the Blind Forest", "Light of Nibel", ["t6vWDz5NzOY", "KekxsY7F2ts"]], ["Ori and the Will of the Wisps", "Main Theme", ["Qh3NnE7Ye2M", "scAabNH3R6I"]], ["Shovel Knight", "Strike the Earth!", ["wqAYMZSOQao", "W7rhEKTX-sE"]], ["Cave Story", "Moonsong", ["q09KoR7g018"]], ["Katamari Damacy", "Katamari on the Rocks", ["iMH49ieL4es", "6FLgM-TOlfI"]], ["Ōkami", "The Sun Rises", ["ya3yxTbkh5s", "bRGv2_JnyVA"]], ["Geometry Dash", "Stereo Madness", ["JhKyKEDxo8Q", "tof8_p0F3kg"]], ["Portal", "Still Alive", ["Y6ljFaKRTrI", "-JZLqTnZZlY"]], ["Portal 2", "Want You Gone", ["dVVZaZ8yO6o", "ao7GG8FXWqQ"]], ["Half-Life 2", "Triage at Dawn", ["SqZvMbLOkgo"]], ["Team Fortress 2", "Main Theme", ["PDM2qukzKwg", "le2VALy6aZQ"]], ["Team Fortress 2", "Rocket Jump Waltz", ["kbdtBLD8Lbg", "2lKEJlDQrXU"]], ["Team Fortress 2", "Right Behind You", ["ciL7OKWSu10", "4bpdu_pRrL4"]], ["Team Fortress 2", "Faster Than a Speeding Bullet", ["hA9XFzxTTOQ", "u8Lb9cLxKN4"]], ["Team Fortress 2", "MEDIC!", ["-6NQx4WRRg0", "691B92oIrrY"]], ["Team Fortress 2", "Intruder Alert", ["kNlVo5udnPs", "xAJIIsYzCqU"]], ["Shadow of the Colossus", "Prologue ~To the Ancient Land", ["Pdi1DSqBZ6Q", "2sT611_y6C4"]], ["Shadow of the Colossus", "The Opened Way", ["36M-NwEFSOc", "cS1yK05dty0"]], ["Shadow of the Colossus", "A Messenger from Behind", ["8_yrEAG5sA0", "5YFoqbd3O0o"]], ["Shadow of the Colossus", "Swift Horse", ["Ttcm-arLAyA", "V7Ms3geVxKs"]], ["Shadow of the Colossus", "Revived Power", ["iUjkBRKg2q0", "g_EdDe_G7C0"]], ["Shadow of the Colossus", "The End of the Battle", ["2KUWVS1XVac", "0HCQ9x39ju4"]], ["Halo: Combat Evolved", "Halo Theme", ["0jXTBAGv9ZQ", "Bzrnw4niuTA"]], ["Halo 3", "One Final Effort", ["RugALElDJkg", "5b8zZmSZC_0"]], ["DOOM (1993)", "At Doom's Gate (E1M1)", ["BSsfjHCFosw"]], ["DOOM (2016)", "Rip & Tear", ["zZMg9ryeWOw", "vyA1z2A-lhU"]], ["DOOM (2016)", "BFG Division", ["QHRuTYtSbJQ", "EHM2OIcG8Ok"]], ["The Elder Scrolls V: Skyrim", "Dragonborn", ["813-3iL5OsE", "UsnRQJxanVM"]], ["The Elder Scrolls V: Skyrim", "Secunda", ["VPgZFgOvJDE", "qC9Ri2hZsos"]], ["The Elder Scrolls V: Skyrim", "Far Horizons", ["ZarbRbkV4ak", "pPWVfCtnGyg"]], ["The Witcher 3", "Silver for Monsters", ["9gDqIjgCG_4", "jRG0gyVFP60"]], ["Mass Effect", "Vigil", ["Ea1eWarxdxQ"]], ["Mass Effect 2", "Suicide Mission", ["VTsD2FjmLsw"]], ["Civilization IV", "Baba Yetu", ["IJiHDmyhE1A", "5e0Qelqp-Cc"]], ["Metal Gear Solid", "Main Theme", ["zqqq8uqSDnk", "EzzJ9Z2sF5Y"]], ["Metal Gear Solid 3", "Snake Eater", ["m2OR_JaXDaM", "9aHQnDTd1y4"]], ["Metal Gear Rising: Revengeance", "Rules of Nature", ["FOrPd81RicU", "N3472Q6kvg0"]], ["Silent Hill 2", "Theme of Laura", ["td3P1-cfZ4E", "6LB7LZZGpkw"]], ["Resident Evil 4", "Serenity (Save Room)", ["qBfsAUFifOo"]], ["Final Fantasy", "Prelude", ["cijssP1dnQg", "dPkoNICjQFI"]], ["Final Fantasy VI", "Terra's Theme", ["ObccgHQdos0", "PiI7rDqv9FQ"]], ["Final Fantasy VI", "Dancing Mad", ["sJ0HeCZYAhI", "g6UgxJtHIVY"]], ["Final Fantasy VII", "One-Winged Angel", ["IYMTzLxGv3M", "mYdf0yqK_Fc"]], ["Final Fantasy VII", "Aerith's Theme", ["iqMbmkUpihA", "n0H6kTppjP8"]], ["Final Fantasy VIII", "Liberi Fatali", ["-5qt0NK5b9A", "sbgtlcAonOM"]], ["Final Fantasy X", "To Zanarkand", ["6fp81GzKarQ", "QQq0zv_JXEk"]], ["Kingdom Hearts", "Dearly Beloved", ["Jk4P10nsq4c", "Bn54G7T_ijE"]], ["Kingdom Hearts", "Simple and Clean", ["_Hl3W4HB254", "N0vhw4dfMRg"]], ["Kingdom Hearts II", "Sanctuary", ["HTUq3Ik1GHM", "Czg3t7QfqDY"]], ["Chrono Trigger", "Corridors of Time", ["BXo3DrXHY8w"]], ["Chrono Trigger", "To Far Away Times", ["kSS6ZRIi7mM", "y_S6z1LsGM8"]], ["Chrono Cross", "Scars of Time", ["40BZyMdDG4s", "180sjeAMKPE"]], ["Persona 3", "Mass Destruction", ["S0GgBcNKK5g", "6jFaoLrLzd4"]], ["Persona 4", "Reach Out to the Truth", ["A9zlXUSuUeo", "11nM7lkCkhk"]], ["Persona 5", "Last Surprise", ["ZNGqBDRJgvo", "Ec4YbVP9R-A"]], ["NieR", "Song of the Ancients", ["5FaEtvA_11A", "RyxjxEOApIE"]], ["NieR: Automata", "Weight of the World", ["Yza2l5sWYzg", "f1-eY31Bw7A"]], ["Dark Souls", "Gwyn, Lord of Cinder", ["3bqLGebDRIY", "Nvv9w-UPuSY"]], ["Bloodborne", "Ludwig, the Holy Blade", ["ALbVEmzY5S4", "oTBi7aHWMbw"]], ["Elden Ring", "Main Theme", ["KBP1zYwBzOE", "ZfGqwHDK2Uw"]], ["Castlevania", "Vampire Killer", ["9Q_da2FxEPI", "btgi3TPL3AE"]], ["Castlevania II: Simon's Quest", "Bloody Tears", ["u-sEcZ43aL8", "e2oZtvjg5oA", "wKWJkiWGS8M"]], ["Mega Man 2", "Dr. Wily Stage 1", ["aTbfpkByIM8", "WPjaMXqsgfQ"]], ["Mega Man X", "Storm Eagle Stage", ["VDcNhkVxjmM", "HdpBgxeOw7w"]], ["Tetris (Game Boy)", "Korobeiniki (Type A)", ["9OLtOdnE1mg", "z3ZiVn5L9vM"]], ["Phoenix Wright: Ace Attorney", "Objection! 2001", ["ANcuqk7x33o", "_I34nshlOPk"]], ["Street Fighter II", "Guile's Theme", ["5Pk6VR209IE", "FEdbR0jnfvQ"]], ["Street Fighter II", "Ken's Theme", ["-14W5XTqL5U", "Hm0ncSVPp8Y"]], ["Crash Bandicoot", "N. Sanity Beach", ["TnPEh331aLE", "AxzXp2wKt6U"]], ["Spyro the Dragon", "Town Square", ["-7rY6XlWspo", "jrucgmML3ck"]], ["Assassin's Creed II", "Ezio's Family", ["FSVHx23ByhM", "zgOArG2_dqE"]], ["The Last of Us", "Main Theme", ["Pt1pOY3_W64", "pfA5UqEU_80"]], ["God of War (2018)", "Main Theme", ["jpyVfd8TyoI", "y9hh91-2iaA"]], ["Uncharted 2", "Nate's Theme", ["To2nyZRpZ38", "GhdJSAPS21U"]], ["Red Dead Redemption 2", "That's the Way It Is", ["HjYLY3BGDY4", "gJ7KotqY5xY"]], ["Grand Theft Auto: San Andreas", "Main Theme", ["7qfbi3HACV8", "6VewzN781wQ"]], ["Grand Theft Auto IV", "Soviet Connection", ["93TW692tQb8", "pWO718iy5mY"]], ["Fallout 4", "Main Theme", ["6YmUufemZSM", "kdOKjUfMPe0"]], ["The Legend of Zelda: A Link to the Past", "Dark World", ["sslj06K-Nlw"]], ["The Legend of Zelda: Ocarina of Time", "Hyrule Field", ["s3YA4-mDkPk", "S1vXYPtn03c"]], ["The Legend of Zelda: Majora's Mask", "Song of Healing", ["XDX4ZwUeOok"]], ["The Legend of Zelda: The Wind Waker", "The Great Sea", ["xV9_iMpXv-U"]], ["The Legend of Zelda: Twilight Princess", "Midna's Lament", ["FUQKP0pt8Mg"]], ["The Legend of Zelda: Link's Awakening", "Ballad of the Wind Fish", ["W4Ofmt3ZazA", "xb92HWXmdhk"]], ["The Legend of Zelda: Breath of the Wild", "Hyrule Castle", ["ieSz7F8MgqA", "lVDGXXIq4b4"]], ["Super Mario Bros. 3", "Overworld Theme", ["Qd78OMGLkVA", "Q_saM7I20pY"]], ["Super Mario 64", "Slider", ["f64nXt1z4XU", "TSMAkZSukvI"]], ["Mario Kart Wii", "Maple Treeway", ["i08-uym7o5c", "_SEfjXNzVf8"]], ["Mario Kart DS", "Waluigi Pinball", ["crc1Wn59nog", "rvkl-zxyl14"]], ["Donkey Kong 64", "DK Rap", ["npuuTBlEb1U", "G0XxA1ms_II"]], ["Super Smash Bros. Melee", "Menu 1", ["ifa_OexXEAk", "z2xxQXcmOeE"]], ["Kid Icarus: Uprising", "Main Theme", ["J72zAmL2Xv0", "5FlFT8bm4KM"]], ["Fire Emblem: Three Houses", "Edge of Dawn", ["FSXuM2v0YLY", "3tyItXMM-qs"]], ["EarthBound", "Onett", ["XKfXsTkA71I", "xkOIK1hQMrk"]], ["Pokémon Rojo/Azul", "Battle! (Trainer)", ["UH7YJGheDUU"]], ["Pokémon Rojo/Azul", "Battle! (Gym Leader)", ["Vk9T241KnF0"]], ["Pokémon Rubí/Zafiro", "Littleroot Town", ["im6tbN9SZXs"]], ["Animal Crossing: New Leaf", "5 PM", ["Dy583WBVB3g", "Y8_FKs5tIXs"]], ["Sonic the Hedgehog 3", "IceCap Zone", ["hYxlqTpZ-24", "mKL0BtScEd8"]], ["Sonic Mania", "Studiopolis Zone Act 1", ["NIWyZmFSep0", "PvuYSybooLg"]], ["Sonic Frontiers", "I'm Here", ["mUJS9ystZlc", "vyCYA4iC_Wo"]], ["Castlevania: Symphony of the Night", "Dracula's Castle", ["cyWTgLf-piE", "dh1qqLbuBww"]], ["Contra", "Jungle (Stage 1)", ["O04bPRzqEEk", "5UqXbEwqwF8"]], ["Street Fighter II", "Ryu's Theme", ["wkdz9hl-cVQ", "hO7JEqIPQv0"]], ["Undertale", "His Theme", ["8tf-gVaHdag", "pMXxxFeZAPg"]], ["Undertale", "Death by Glamour", ["qeDIZCc6Cyo"]], ["Undertale", "ASGORE", ["42kI2lT0x6U"]], ["Deltarune", "BIG SHOT", ["V31PVkwzpEY"]], ["Deltarune", "Field of Hopes and Dreams", ["9oDZ2vN9XF0"]], ["Celeste", "Reach for the Summit", ["iDVM9KED46Q", "qx1PcEgmFHY"]], ["Hades", "No Escape", ["oksESAMg7WM"]], ["Minecraft", "Haggstrom", ["D09Okc11afI", "laZusNy8QiY"]], ["Minecraft", "Danny", ["WfLOBeeLtuE", "SznnVAnkv3c"]], ["Stardew Valley", "Spring (It's a Big World Outside)", ["FO9WXi9gxQg", "d1r5JmoqI2M"]], ["Geometry Dash", "Back on Track", ["N9vDTYZpqXM", "MufsGEMhP3k"]], ["Geometry Dash", "Clubstep", ["T7Wff9xaqjc", "TiwSjh7SI5Y", "63kJKWMTlzs"]], ["Portal 2", "Cara Mia Addio!", ["tL_TFXbSnLY", "kis6V6qwYxI"]], ["Half-Life 2", "CP Violation", ["2ZwDAGPx1fA", "QsjJmvANWn8"]], ["The Elder Scrolls IV: Oblivion", "Reign of the Septims", ["y-jNCOn4-SA", "Dil9i9gOeB0"]], ["The Witcher 3", "The Fields of Ard Skellig", ["3wkZu2kDeVg"]], ["The Witcher 3", "Kaer Morhen", ["5GUiNoIm0E4"]], ["Dark Souls", "Firelink Shrine", ["Gjht7acg9d4", "EL9dArwG5cE"]], ["Dark Souls III", "Soul of Cinder", ["x0euNw-4YOo", "U-IBbs0QRs8"]], ["Elden Ring", "Malenia, Blade of Miquella", ["W3SWV8tvu18", "YrNzi-gaC3w"]], ["Final Fantasy VI", "Aria di Mezzo Carattere", ["iqZiSqIaBag", "MLHR9ltzuWM"]], ["Final Fantasy VII", "Those Who Fight", ["7HV3oyxr0Eg", "nyVBrqCyrPE"]], ["Final Fantasy IX", "Melodies of Life", ["Ye7BGnlTZmQ", "DW4C4RVmN9s"]], ["Chrono Trigger", "Frog's Theme", ["JiMmZYx-eXA"]], ["Persona 3", "Burn My Dread", ["bNvjrEoVoH0", "XxNAwZ-A88w"]], ["Persona 5", "Life Will Change", ["dsuJZx24V_A"]], ["NieR: Automata", "City Ruins (Rays of Light)", ["LC5HsZt4oNc"]], ["Metal Gear Solid 2", "Main Theme", ["QiPon8lr48U", "6kZ5TiSl2d8"]], ["Metal Gear Rising: Revengeance", "It Has To Be This Way", ["rOmD2CQGgt4", "fxq_B2KPQDY"]], ["DOOM Eternal", "The Only Thing They Fear Is You", ["kpnW68Q8ltc", "ekY09M48Jvs"]], ["Halo 2", "Mjolnir Mix", ["DgGnpQDc5JM", "Qz7EhV4t4Es"]], ["Mass Effect 3", "An End Once and For All", ["x5JvbD2Zc9I", "I0hEK9eIbeY"]], ["Call of Duty: Modern Warfare 2", "Main Theme", ["elZukfP_R8w", "FXLY_5xaYFo"]], ["Battlefield 1942", "Main Theme", ["vg0Tmydj29M", "ELHWx4gHmyA"]], ["Overwatch", "Main Theme", ["LrA__QQ6RAE", "PDanWcodhOQ"]], ["God of War Ragnarök", "Main Theme", ["V5Ar0dKnl6Y"]], ["Red Dead Redemption", "Far Away", ["7rasK2RlrOU", "hRMtt8tES-U"]], ["Assassin's Creed II", "Venice Rooftops", ["X9geXVAOFDg"]], ["Hotline Miami", "Hydrogen", ["SNE2oCZH_4k", "84q83skr_tk"]], ["Plants vs. Zombies", "Grasswalk", ["43SfJem13jQ", "b3xnLXYUYOw"]], ["Plants vs. Zombies", "Zombies on Your Lawn", ["Jb9caDRp_30", "0N1_0SUGlDQ"]], ["Angry Birds", "Main Theme", ["r6vX3lrwq-4", "Y10PRnL7C_U"]], ["Subway Surfers", "Main Theme", ["H_G-kvMxg3Y", "PJpA7YoGBlc"]]];
+const DEFAULT_SONGS = [["The Legend of Zelda: Ocarina of Time", "Gerudo Valley", ["0hEYvdMoF2g"]], ["The Legend of Zelda: Ocarina of Time", "Song of Storms", ["UtgHZaq0EGs", "N3OZoErzJg0"]], ["The Legend of Zelda: Ocarina of Time", "Lost Woods (Saria's Song)", ["fER8zIAhRD0", "V9so9y-8Dgk"]], ["The Legend of Zelda: Majora's Mask", "Clock Town", ["K0kXVfqPrLs", "u2LEuANbk5s"]], ["The Legend of Zelda: The Wind Waker", "Dragon Roost Island", ["SXGGvsHq6iA", "SfaNKs2KZ1o"]], ["The Legend of Zelda: Twilight Princess", "Hyrule Field", ["t6JgG__XbRA", "7xf3b-dETYw"]], ["The Legend of Zelda: Skyward Sword", "Ballad of the Goddess", ["F-WToBQYZ_A", "v4ReyoNpyrM"]], ["The Legend of Zelda: Breath of the Wild", "Main Theme", ["tDkjr_cYO6M", "U_Mm4Tia9zI"]], ["The Legend of Zelda: Tears of the Kingdom", "Main Theme", ["n0tIW8vi0P0", "jW7LEygnsDc", "NSbQ5z4d9xY"]], ["Super Mario Bros.", "Overworld Theme", ["iy3qq7zc4EY"]], ["Super Mario World", "Overworld Theme", ["tAaGKo4XVvM", "8w4nvCAx45s"]], ["Super Mario 64", "Bob-omb Battlefield", ["bmP3UHXYi28", "2TcTc4YmS9c", "CrjzjD67TZk"]], ["Super Mario 64", "Dire, Dire Docks", ["Zqa2mgjbOIM", "piJG3oOXKVo"]], ["Super Mario Sunshine", "Delfino Plaza", ["uVCAnYTkyIo", "VAP8IUhU2kc"]], ["Super Mario Galaxy", "Gusty Garden Galaxy", ["1bvDHAUv2ak"]], ["Super Mario Galaxy", "Comet Observatory", ["wBhzmys2-eU", "mCd7jJePB0I"]], ["Super Mario Odyssey", "Jump Up, Super Star!", ["e9r5hx47kxM", "fbR_pCRPDTg", "gaW-hZUyhZc"]], ["Super Mario RPG", "Forest Maze", ["vkailb3xcTI", "3TeQ7jFDwF0"]], ["Mario Kart 64", "Rainbow Road", ["K5xdue7GFcc", "BukCo9ebcSc"]], ["Mario Kart Wii", "Coconut Mall", ["cscuCIzItZQ"]], ["Mario Kart 8", "Rainbow Road", ["R2QDnja3WKg", "pX1-EMO_2V4"]], ["Luigi's Mansion", "Main Theme", ["nrYC6Ww8shc", "0uaIuzOaWpk"]], ["Yoshi's Island", "Flower Garden", ["DTpksvCC-hg", "NsviiiqdsMM"]], ["Donkey Kong Country", "DK Island Swing", ["HG8YrDF6cDk", "QPmW6eLX5fw"]], ["Donkey Kong Country", "Aquatic Ambiance", ["1XM8ReW9NvA", "o38ldEK8FjE"]], ["Donkey Kong Country", "Gangplank Galleon", ["T0H_gtLBeFo"]], ["Donkey Kong Country 2", "Stickerbrush Symphony", ["mdPlcKg-qFs"]], ["Sonic the Hedgehog", "Green Hill Zone", ["G-i8HYi1QH0", "NaAb1s0MCQQ", "55uDJ39W4i0"]], ["Sonic the Hedgehog 2", "Chemical Plant Zone", ["-LYB7iLZNWE", "rkCqQBJ8hT4", "SrCgjGnlQRQ"]], ["Sonic CD", "Stardust Speedway (JP)", ["aAxSF4JESSU", "hJY73z2fQQs"]], ["Sonic Adventure", "Open Your Heart", ["JsL-5R76jFk", "uEzXFuYN89k", "4fo__Sh0nIg"]], ["Sonic Adventure 2", "Escape from the City", ["5WcyVvWZJU4", "qR6mTJRbcaE"]], ["Sonic Adventure 2", "Live and Learn", ["3gPBmDptqlQ", "sefGW__p6WE", "z1BRZg0GG0A"]], ["Sonic the Hedgehog (2006)", "His World", ["uBb3QU4r4KY", "BWWfjK0v8eM"]], ["Pokémon Rojo/Azul", "Pallet Town", ["cOWRNLaCMJg", "kO09V19wwlE"]], ["Pokémon Rojo/Azul", "Lavender Town", ["JNJJ-QkZ8cM", "9r76RJAN35Q"]], ["Pokémon Rojo/Azul", "Battle! (Wild Pokémon)", ["NrS523dOHU4", "LgK2f47q8cU"]], ["Pokémon Oro/Plata", "Goldenrod City", ["S1-VyHIx_SY", "DlqTD429kEM"]], ["Pokémon Diamante/Perla", "Battle! (Champion Cynthia)", ["rXefFHRgyE0", "Ql-TllQkoqM"]], ["Kirby's Dream Land", "Green Greens", ["twPSaCABakA", "yW1X28sp7v4"]], ["Kirby Super Star", "Gourmet Race", ["Se1uh3PS78Y", "Y7_zI7QFqu4"]], ["Kirby Super Star", "Revenge of Meta Knight", ["c_-huuSqn3w", "aD1R0romZ2s"]], ["Super Metroid", "Vs. Ridley", ["duftrIgy670"]], ["Metroid Prime", "Phendrana Drifts", ["ZbbUv1hz6mE", "oRZVPHMPYLQ"]], ["Star Fox 64", "Corneria", ["rcug6QTiJNI", "btL9yauabJg"]], ["F-Zero", "Big Blue", ["VEU7-9z7TMs", "H2yvU11in_w"]], ["F-Zero", "Mute City", ["wlxa4w-7DUI"]], ["Super Smash Bros. Brawl", "Main Theme", ["zeKE0NHUtUw", "3SYR4S1ZtQo"]], ["Super Smash Bros. Ultimate", "Lifelight", ["EhgDibw7vB4", "qiI7wTGV6Go"]], ["Banjo-Kazooie", "Spiral Mountain", ["IlzflkN7g-U", "b1cRQRdg62E"]], ["Banjo-Kazooie", "Treasure Trove Cove", ["wP8uBFQHSG4", "5DQfnj33-QU"]], ["Xenoblade Chronicles", "Gaur Plain", ["UDJtsfR51To", "LFrZo963D0s"]], ["Xenoblade Chronicles", "You Will Know Our Names", ["g7yNyhLOIa4", "7wtm_aeW8gM"]], ["Fire Emblem", "Fire Emblem Theme", ["pHGOlVRH7_8", "1Oetx3nQ3Bw"]], ["Splatoon", "Splattack!", ["LBQmvJyIKTg", "mSUcKnqzOKg"]], ["Splatoon 3", "Anarchy Rainbow", ["1b9G-zdG5V0", "DtMOAvOWTvY"]], ["EarthBound / MOTHER", "Pollyanna", ["XoSBRcQwocE", "w3NyycHR3fE"]], ["Pikmin", "Forest of Hope", ["HoMx0BTPVgE", "jc3gs7OJ0Jc"]], ["Animal Crossing: New Horizons", "Main Theme", ["yQwg_pQfZDA", "f0yelOf7rGI"]], ["Wii", "Mii Channel", ["po-0n1BKW2w", "eqtZPO7XSKk"]], ["Wii", "Wii Shop Channel", ["yyjUmv1gJEg"]], ["Wii Sports", "Title Theme", ["2qvAxPqy2wA", "diQEujrcFG0"]], ["Undertale", "Megalovania", ["0FCvzsVlXpQ", "KK3KXAECte4"]], ["Undertale", "Hopes and Dreams", ["wbO3p7_Mf30"]], ["Undertale", "Spear of Justice", ["XGzYhJcm-Jw"]], ["Undertale", "Bonetrousle", ["AKAiUtWZ4xY", "mLsWDkF_LIc"]], ["Undertale", "Fallen Down", ["qH5hM1ILuFQ"]], ["Deltarune", "Rude Buster", ["GPL5Hkl11IQ"]], ["Deltarune", "THE WORLD REVOLVING", ["Z01Tsgwe2dQ", "cfxTZ0aw6iY"]], ["Minecraft", "Sweden", ["xIQrC4CerB8", "aBkTkxKDduc"]], ["Minecraft", "Wet Hands", ["lq1vZxM-Iic", "mukiMaOSLEs"]], ["Minecraft", "Subwoofer Lullaby", ["o3_InDEtpLA", "Gpd85y_iTxY"]], ["Minecraft", "Pigstep", ["BTthtlT80Rc", "R9eC3WBRKeY"]], ["Terraria", "Overworld Day", ["Zmd43wV2Ko4", "x23I8f9PwlI"]], ["Stardew Valley", "Stardew Valley Overture", ["FQSHcl6TJb4", "1I7vAflFKS4"]], ["Celeste", "First Steps", ["N8OHSXvneOE", "Rm8hXsSyV0I"]], ["Celeste", "Resurrections", ["1rwAvUvvQzQ"]], ["Celeste", "Confronting Myself", ["b_oEDGONSc4", "0qbRhwEsX4A"]], ["Hollow Knight", "City of Tears", ["MJDn70jh1V0"]], ["Hollow Knight", "Hornet", ["7xkM8mWC4Kk"]], ["Hollow Knight", "Sealed Vessel", ["ze0Rk-m0w2A"]], ["Cuphead", "Floral Fury", ["2clUY-OsCpY", "qD54sROmeIM"]], ["Cuphead", "Don't Deal with the Devil", ["D4Hr0L9PrAg", "D6KXf-kXKIA"]], ["Hades", "In the Blood", ["ojx8dyes__8", "zzLP3w1brDY"]], ["Outer Wilds", "Travelers", ["z34enKCqRGk", "2RJtvhippL0"]], ["Journey", "Apotheosis", ["ypNgvc6c6Cc"]], ["Ori and the Blind Forest", "Light of Nibel", ["t6vWDz5NzOY", "KekxsY7F2ts"]], ["Ori and the Will of the Wisps", "Main Theme", ["Qh3NnE7Ye2M", "scAabNH3R6I"]], ["Shovel Knight", "Strike the Earth!", ["wqAYMZSOQao", "W7rhEKTX-sE"]], ["Cave Story", "Moonsong", ["q09KoR7g018"]], ["Katamari Damacy", "Katamari on the Rocks", ["iMH49ieL4es", "6FLgM-TOlfI"]], ["Ōkami", "The Sun Rises", ["ya3yxTbkh5s", "bRGv2_JnyVA"]], ["Geometry Dash", "Stereo Madness", ["JhKyKEDxo8Q", "tof8_p0F3kg"]], ["Portal", "Still Alive", ["Y6ljFaKRTrI", "-JZLqTnZZlY"]], ["Portal 2", "Want You Gone", ["dVVZaZ8yO6o", "ao7GG8FXWqQ"]], ["Half-Life 2", "Triage at Dawn", ["SqZvMbLOkgo"]], ["Team Fortress 2", "Main Theme", ["PDM2qukzKwg", "le2VALy6aZQ"]], ["Team Fortress 2", "Rocket Jump Waltz", ["kbdtBLD8Lbg", "2lKEJlDQrXU"]], ["Team Fortress 2", "Right Behind You", ["ciL7OKWSu10", "4bpdu_pRrL4"]], ["Team Fortress 2", "Faster Than a Speeding Bullet", ["hA9XFzxTTOQ", "u8Lb9cLxKN4"]], ["Team Fortress 2", "MEDIC!", ["-6NQx4WRRg0", "691B92oIrrY"]], ["Team Fortress 2", "Intruder Alert", ["kNlVo5udnPs", "xAJIIsYzCqU"]], ["Shadow of the Colossus", "Prologue ~To the Ancient Land", ["Pdi1DSqBZ6Q", "2sT611_y6C4"]], ["Shadow of the Colossus", "The Opened Way", ["36M-NwEFSOc", "cS1yK05dty0"]], ["Shadow of the Colossus", "A Messenger from Behind", ["8_yrEAG5sA0", "5YFoqbd3O0o"]], ["Shadow of the Colossus", "Swift Horse", ["Ttcm-arLAyA", "V7Ms3geVxKs"]], ["Shadow of the Colossus", "Revived Power", ["iUjkBRKg2q0", "g_EdDe_G7C0"]], ["Shadow of the Colossus", "The End of the Battle", ["2KUWVS1XVac", "0HCQ9x39ju4"]], ["Halo: Combat Evolved", "Halo Theme", ["0jXTBAGv9ZQ", "Bzrnw4niuTA"]], ["Halo 3", "One Final Effort", ["RugALElDJkg", "5b8zZmSZC_0"]], ["DOOM (1993)", "At Doom's Gate (E1M1)", ["BSsfjHCFosw"]], ["DOOM (2016)", "Rip & Tear", ["zZMg9ryeWOw", "vyA1z2A-lhU"]], ["DOOM (2016)", "BFG Division", ["QHRuTYtSbJQ", "EHM2OIcG8Ok"]], ["The Elder Scrolls V: Skyrim", "Dragonborn", ["813-3iL5OsE", "UsnRQJxanVM"]], ["The Elder Scrolls V: Skyrim", "Secunda", ["VPgZFgOvJDE", "qC9Ri2hZsos"]], ["The Elder Scrolls V: Skyrim", "Far Horizons", ["ZarbRbkV4ak", "pPWVfCtnGyg"]], ["The Witcher 3", "Silver for Monsters", ["9gDqIjgCG_4", "jRG0gyVFP60"]], ["Mass Effect", "Vigil", ["Ea1eWarxdxQ"]], ["Mass Effect 2", "Suicide Mission", ["VTsD2FjmLsw"]], ["Civilization IV", "Baba Yetu", ["IJiHDmyhE1A", "5e0Qelqp-Cc"]], ["Metal Gear Solid", "Main Theme", ["zqqq8uqSDnk", "EzzJ9Z2sF5Y"]], ["Metal Gear Solid 3", "Snake Eater", ["m2OR_JaXDaM", "9aHQnDTd1y4"]], ["Metal Gear Rising: Revengeance", "Rules of Nature", ["FOrPd81RicU", "N3472Q6kvg0"]], ["Silent Hill 2", "Theme of Laura", ["td3P1-cfZ4E", "6LB7LZZGpkw"]], ["Resident Evil 4", "Serenity (Save Room)", ["qBfsAUFifOo"]], ["Final Fantasy", "Prelude", ["cijssP1dnQg", "dPkoNICjQFI"]], ["Final Fantasy VI", "Terra's Theme", ["ObccgHQdos0", "PiI7rDqv9FQ"]], ["Final Fantasy VI", "Dancing Mad", ["sJ0HeCZYAhI", "g6UgxJtHIVY"]], ["Final Fantasy VII", "One-Winged Angel", ["IYMTzLxGv3M", "mYdf0yqK_Fc"]], ["Final Fantasy VII", "Aerith's Theme", ["iqMbmkUpihA", "n0H6kTppjP8"]], ["Final Fantasy VIII", "Liberi Fatali", ["-5qt0NK5b9A", "sbgtlcAonOM"]], ["Final Fantasy X", "To Zanarkand", ["6fp81GzKarQ", "QQq0zv_JXEk"]], ["Kingdom Hearts", "Dearly Beloved", ["Jk4P10nsq4c", "Bn54G7T_ijE"]], ["Kingdom Hearts", "Simple and Clean", ["_Hl3W4HB254", "N0vhw4dfMRg"]], ["Kingdom Hearts II", "Sanctuary", ["HTUq3Ik1GHM", "Czg3t7QfqDY"]], ["Chrono Trigger", "Corridors of Time", ["BXo3DrXHY8w"]], ["Chrono Trigger", "To Far Away Times", ["kSS6ZRIi7mM", "y_S6z1LsGM8"]], ["Chrono Cross", "Scars of Time", ["40BZyMdDG4s", "180sjeAMKPE"]], ["Persona 3", "Mass Destruction", ["S0GgBcNKK5g", "6jFaoLrLzd4"]], ["Persona 4", "Reach Out to the Truth", ["A9zlXUSuUeo", "11nM7lkCkhk"]], ["Persona 5", "Last Surprise", ["ZNGqBDRJgvo", "Ec4YbVP9R-A"]], ["NieR", "Song of the Ancients", ["5FaEtvA_11A", "RyxjxEOApIE"]], ["NieR: Automata", "Weight of the World", ["Yza2l5sWYzg", "f1-eY31Bw7A"]], ["Dark Souls", "Gwyn, Lord of Cinder", ["3bqLGebDRIY", "Nvv9w-UPuSY"]], ["Bloodborne", "Ludwig, the Holy Blade", ["ALbVEmzY5S4", "oTBi7aHWMbw"]], ["Elden Ring", "Main Theme", ["KBP1zYwBzOE", "ZfGqwHDK2Uw"]], ["Castlevania", "Vampire Killer", ["9Q_da2FxEPI", "btgi3TPL3AE"]], ["Castlevania II: Simon's Quest", "Bloody Tears", ["u-sEcZ43aL8", "e2oZtvjg5oA", "wKWJkiWGS8M"]], ["Mega Man 2", "Dr. Wily Stage 1", ["aTbfpkByIM8", "WPjaMXqsgfQ"]], ["Mega Man X", "Storm Eagle Stage", ["VDcNhkVxjmM", "HdpBgxeOw7w"]], ["Tetris (Game Boy)", "Korobeiniki (Type A)", ["9OLtOdnE1mg", "z3ZiVn5L9vM"]], ["Phoenix Wright: Ace Attorney", "Objection! 2001", ["ANcuqk7x33o", "_I34nshlOPk"]], ["Street Fighter II", "Guile's Theme", ["5Pk6VR209IE", "FEdbR0jnfvQ"]], ["Street Fighter II", "Ken's Theme", ["-14W5XTqL5U", "Hm0ncSVPp8Y"]], ["Crash Bandicoot", "N. Sanity Beach", ["TnPEh331aLE", "AxzXp2wKt6U"]], ["Spyro the Dragon", "Town Square", ["-7rY6XlWspo", "jrucgmML3ck"]], ["Assassin's Creed II", "Ezio's Family", ["FSVHx23ByhM", "zgOArG2_dqE"]], ["The Last of Us", "Main Theme", ["Pt1pOY3_W64", "pfA5UqEU_80"]], ["God of War (2018)", "Main Theme", ["jpyVfd8TyoI", "y9hh91-2iaA"]], ["Uncharted 2", "Nate's Theme", ["To2nyZRpZ38", "GhdJSAPS21U"]], ["Red Dead Redemption 2", "That's the Way It Is", ["HjYLY3BGDY4", "gJ7KotqY5xY"]], ["Grand Theft Auto: San Andreas", "Main Theme", ["7qfbi3HACV8", "6VewzN781wQ"]], ["Grand Theft Auto IV", "Soviet Connection", ["93TW692tQb8", "pWO718iy5mY"]], ["Fallout 4", "Main Theme", ["6YmUufemZSM", "kdOKjUfMPe0"]], ["The Legend of Zelda: A Link to the Past", "Dark World", ["sslj06K-Nlw"]], ["The Legend of Zelda: Ocarina of Time", "Hyrule Field", ["s3YA4-mDkPk", "S1vXYPtn03c"]], ["The Legend of Zelda: Majora's Mask", "Song of Healing", ["XDX4ZwUeOok"]], ["The Legend of Zelda: The Wind Waker", "The Great Sea", ["xV9_iMpXv-U"]], ["The Legend of Zelda: Twilight Princess", "Midna's Lament", ["FUQKP0pt8Mg"]], ["The Legend of Zelda: Link's Awakening", "Ballad of the Wind Fish", ["W4Ofmt3ZazA", "xb92HWXmdhk"]], ["The Legend of Zelda: Breath of the Wild", "Hyrule Castle", ["ieSz7F8MgqA", "lVDGXXIq4b4"]], ["Super Mario Bros. 3", "Overworld Theme", ["Qd78OMGLkVA", "Q_saM7I20pY"]], ["Super Mario 64", "Slider", ["f64nXt1z4XU", "TSMAkZSukvI"]], ["Mario Kart Wii", "Maple Treeway", ["i08-uym7o5c", "_SEfjXNzVf8"]], ["Mario Kart DS", "Waluigi Pinball", ["crc1Wn59nog", "rvkl-zxyl14"]], ["Donkey Kong 64", "DK Rap", ["npuuTBlEb1U", "G0XxA1ms_II"]], ["Super Smash Bros. Melee", "Menu 1", ["ifa_OexXEAk", "z2xxQXcmOeE"]], ["Kid Icarus: Uprising", "Main Theme", ["J72zAmL2Xv0", "5FlFT8bm4KM"]], ["Fire Emblem: Three Houses", "Edge of Dawn", ["FSXuM2v0YLY", "3tyItXMM-qs"]], ["EarthBound", "Onett", ["XKfXsTkA71I", "xkOIK1hQMrk"]], ["Pokémon Rojo/Azul", "Battle! (Trainer)", ["UH7YJGheDUU"]], ["Pokémon Rojo/Azul", "Battle! (Gym Leader)", ["Vk9T241KnF0"]], ["Pokémon Rubí/Zafiro", "Littleroot Town", ["im6tbN9SZXs"]], ["Animal Crossing: New Leaf", "5 PM", ["Dy583WBVB3g", "Y8_FKs5tIXs"]], ["Sonic the Hedgehog 3", "IceCap Zone", ["hYxlqTpZ-24", "mKL0BtScEd8"]], ["Sonic Mania", "Studiopolis Zone Act 1", ["NIWyZmFSep0", "PvuYSybooLg"]], ["Sonic Frontiers", "I'm Here", ["mUJS9ystZlc", "vyCYA4iC_Wo"]], ["Castlevania: Symphony of the Night", "Dracula's Castle", ["cyWTgLf-piE", "dh1qqLbuBww"]], ["Contra", "Jungle (Stage 1)", ["O04bPRzqEEk", "5UqXbEwqwF8"]], ["Street Fighter II", "Ryu's Theme", ["wkdz9hl-cVQ", "hO7JEqIPQv0"]], ["Undertale", "His Theme", ["8tf-gVaHdag", "pMXxxFeZAPg"]], ["Undertale", "Death by Glamour", ["qeDIZCc6Cyo"]], ["Undertale", "ASGORE", ["42kI2lT0x6U"]], ["Deltarune", "BIG SHOT", ["V31PVkwzpEY"]], ["Deltarune", "Field of Hopes and Dreams", ["9oDZ2vN9XF0"]], ["Celeste", "Reach for the Summit", ["iDVM9KED46Q", "qx1PcEgmFHY"]], ["Hades", "No Escape", ["oksESAMg7WM"]], ["Minecraft", "Haggstrom", ["D09Okc11afI", "laZusNy8QiY"]], ["Minecraft", "Danny", ["WfLOBeeLtuE", "SznnVAnkv3c"]], ["Stardew Valley", "Spring (It's a Big World Outside)", ["FO9WXi9gxQg", "d1r5JmoqI2M"]], ["Geometry Dash", "Back on Track", ["N9vDTYZpqXM", "MufsGEMhP3k"]], ["Geometry Dash", "Clubstep", ["T7Wff9xaqjc", "TiwSjh7SI5Y", "63kJKWMTlzs"]], ["Portal 2", "Cara Mia Addio!", ["tL_TFXbSnLY", "kis6V6qwYxI"]], ["Half-Life 2", "CP Violation", ["2ZwDAGPx1fA", "QsjJmvANWn8"]], ["The Elder Scrolls IV: Oblivion", "Reign of the Septims", ["y-jNCOn4-SA", "Dil9i9gOeB0"]], ["The Witcher 3", "The Fields of Ard Skellig", ["3wkZu2kDeVg"]], ["The Witcher 3", "Kaer Morhen", ["5GUiNoIm0E4"]], ["Dark Souls", "Firelink Shrine", ["Gjht7acg9d4", "EL9dArwG5cE"]], ["Dark Souls III", "Soul of Cinder", ["x0euNw-4YOo", "U-IBbs0QRs8"]], ["Elden Ring", "Malenia, Blade of Miquella", ["W3SWV8tvu18", "YrNzi-gaC3w"]], ["Final Fantasy VI", "Aria di Mezzo Carattere", ["iqZiSqIaBag", "MLHR9ltzuWM"]], ["Final Fantasy VII", "Those Who Fight", ["7HV3oyxr0Eg", "nyVBrqCyrPE"]], ["Final Fantasy IX", "Melodies of Life", ["Ye7BGnlTZmQ", "DW4C4RVmN9s"]], ["Chrono Trigger", "Frog's Theme", ["JiMmZYx-eXA"]], ["Persona 3", "Burn My Dread", ["bNvjrEoVoH0", "XxNAwZ-A88w"]], ["Persona 5", "Life Will Change", ["dsuJZx24V_A"]], ["NieR: Automata", "City Ruins (Rays of Light)", ["LC5HsZt4oNc"]], ["Metal Gear Solid 2", "Main Theme", ["QiPon8lr48U", "6kZ5TiSl2d8"]], ["Metal Gear Rising: Revengeance", "It Has To Be This Way", ["rOmD2CQGgt4", "fxq_B2KPQDY"]], ["DOOM Eternal", "The Only Thing They Fear Is You", ["kpnW68Q8ltc", "ekY09M48Jvs"]], ["Halo 2", "Mjolnir Mix", ["DgGnpQDc5JM", "Qz7EhV4t4Es"]], ["Mass Effect 3", "An End Once and For All", ["x5JvbD2Zc9I", "I0hEK9eIbeY"]], ["Call of Duty: Modern Warfare 2", "Main Theme", ["elZukfP_R8w", "FXLY_5xaYFo"]], ["Battlefield 1942", "Main Theme", ["vg0Tmydj29M", "ELHWx4gHmyA"]], ["Overwatch", "Main Theme", ["LrA__QQ6RAE", "PDanWcodhOQ"]], ["God of War Ragnarök", "Main Theme", ["V5Ar0dKnl6Y"]], ["Red Dead Redemption", "Far Away", ["7rasK2RlrOU", "hRMtt8tES-U"]], ["Assassin's Creed II", "Venice Rooftops", ["X9geXVAOFDg"]], ["Hotline Miami", "Hydrogen", ["SNE2oCZH_4k", "84q83skr_tk"]], ["Plants vs. Zombies", "Grasswalk", ["43SfJem13jQ", "b3xnLXYUYOw"]], ["Plants vs. Zombies", "Zombies on Your Lawn", ["Jb9caDRp_30", "0N1_0SUGlDQ"]], ["Angry Birds", "Main Theme", ["r6vX3lrwq-4", "Y10PRnL7C_U"]], ["Subway Surfers", "Main Theme", ["H_G-kvMxg3Y", "PJpA7YoGBlc"]], ["Super Mario 3D World", "Super Bell Hill", ["F7Gtn4IwzGk"]], ["Super Mario Odyssey", "Fossil Falls", ["2LQE9FLNK7o", "f8W5U6uDsMA"]], ["Paper Mario: The Thousand-Year Door", "Rogueport", ["vorb8NGdGnc"]], ["Mario Kart: Double Dash!!", "Rainbow Road", ["54-1Y-KIhjY", "ct8bJMkNAAc"]], ["Mario Kart Wii", "Rainbow Road", ["BjjNdkFGrPI"]], ["The Legend of Zelda", "Overworld Theme", ["ncg72VswyTs", "lpEzYEoV9qY"]], ["The Legend of Zelda: Ocarina of Time", "Kokiri Forest", ["aQ6Fq-LfDZQ"]], ["The Legend of Zelda: Ocarina of Time", "Temple of Time", ["n66LMxSH3ZM"]], ["The Legend of Zelda: The Wind Waker", "Outset Island", ["vwMCZ6B499c"]], ["The Legend of Zelda: Majora's Mask", "Astral Observatory", ["s0krxH0dWhU"]], ["The Legend of Zelda: Skyward Sword", "Skyloft", ["xa7csMzypW0", "JILsZeof8m4"]], ["Metroid Prime", "Tallon Overworld", ["mziw3FQkZYg", "vOgY3nTqUEU"]], ["Kirby and the Forgotten Land", "Welcome to the New World!", ["HUAy4LBjdHU", "W_qTYnRuQv8"]], ["Pokémon Oro/Plata", "New Bark Town", ["D0j9AOEhzO8", "NmtSAl68peU"]], ["Pokémon Rojo/Azul", "Pokémon Center", ["MjZIjHu0OfY", "YRM3_gt3gfM"]], ["Pokémon Negro/Blanco", "Battle! (N)", ["Gr-qOoB_XKY", "O0ajBL15Knk"]], ["Pokémon Espada/Escudo", "Battle! (Champion Leon)", ["bUG_NS0xqSY"]], ["Donkey Kong Country 2", "Snakey Chantey", ["Mr2cFY_3PT0"]], ["Fire Emblem Awakening", "Id (Purpose)", ["8XY5WxernwY"]], ["Splatoon 2", "Ebb & Flow", ["FOJ1A6CK2Co"]], ["GoldenEye 007", "Facility", ["_oMCy3IZAQE", "usb8ehvqlYo"]], ["Banjo-Kazooie", "Mumbo's Mountain", ["o84aZ6iQoKA"]], ["MOTHER 3", "Love Theme", ["TyN4aGJVkKY"]], ["Crash Bandicoot 2", "Warp Room", ["5E-slklXdhs", "KKoRVTar6cc"]], ["Spyro 2: Ripto's Rage!", "Glimmer", ["9RfiVKrPcpI", "AtKutcNtdNo"]], ["Kingdom Hearts", "Destati", ["w6zzv2KCcZo", "gbeHo6c_a8o"]], ["Final Fantasy VII", "Main Theme of Final Fantasy VII", ["ORpKwkq5z-4", "6uq5AbZXnaQ"]], ["Final Fantasy VIII", "The Man with the Machine Gun", ["KMm7kayDeTU", "LeScjOTYl7g"]], ["Final Fantasy X", "Otherworld", ["KO6fvJrsTsE", "BKZs90_fkt4"]], ["Final Fantasy XIV", "Answers", ["98XSpU9fhkE", "bWdeMqELN-U"]], ["Final Fantasy XV", "Somnus", ["juVZ0TN_2EA"]], ["Chrono Trigger", "Battle with Magus", ["HyjNbPdhQRg"]], ["Persona 5", "Wake Up, Get Up, Get Out There", ["azNG-AU0eGg"]], ["Persona 3", "When the Moon's Reaching Out Stars", ["Iupq4GUgiQ8", "3ko-0jUzF4U"]], ["NieR: Automata", "Amusement Park", ["aCmtbciKbHI"]], ["NieR Replicant", "Kainé (Salvation)", ["FP4duz43t_A"]], ["Dark Souls", "Ornstein and Smough", ["hOxLVIPkHTs", "qzR47RoKUUY"]], ["Bloodborne", "Hunter's Dream", ["B4zcJwpc_9c"]], ["Sekiro: Shadows Die Twice", "Isshin, the Sword Saint", ["bfNCB9fhvIQ"]], ["Elden Ring", "The Final Battle", ["R3R-hzDPi1A", "QqbHqx4niUI"]], ["Metal Gear Solid V", "Sins of the Father", ["y8VfziFZMGY"]], ["Silent Hill 2", "Promise (Reprise)", ["ZwLvcaDMhU8"]], ["Halo 3", "Never Forget", ["JX5O3n9K_d0", "8B2Cu-OWk_I"]], ["Halo: Reach", "Overture", ["kjmu5bj5yBA", "BkV7YpM6zxE"]], ["The Elder Scrolls V: Skyrim", "The Streets of Whiterun", ["j7GGMjCDtyg", "_34gUVqLkAo"]], ["The Witcher 3", "The Wolven Storm (Priscilla's Song)", ["3ukCLUdzbUs", "823yuWz0lto"]], ["Cyberpunk 2077", "I Really Want to Stay at Your House", ["gzbLODUb1sA"]], ["Grand Theft Auto V", "Main Theme", ["KzKvPrIPVbE"]], ["Grand Theft Auto: Vice City", "Main Theme", ["PE485kpuqrs", "5p1vacn3KcE"]], ["Red Dead Redemption 2", "Unshaken", ["L0AykH20X3Q"]], ["The Last of Us", "The Path (A New Beginning)", ["vC4CfQJLhuk"]], ["Celeste", "Scattered and Lost", ["0etenwnI1wo"]], ["Hollow Knight", "Dirtmouth", ["NSlkW1fFkyo", "PjjXPTQe5tY"]], ["Hollow Knight", "The Radiance", ["SkD5Ceo8KAo", "1R91IxpyGp0"]], ["Cuphead", "Inkwell Isle One", ["jvOY2RvuvGs", "osRSZaCswds"]], ["Undertale", "Spider Dance", ["NH-GAwLAO30", "5qZqqUgb1Rw"]], ["Undertale", "Snowdin Town", ["vYyLL9QstbI", "LETChg7kPJo"]], ["Deltarune", "Lantern", ["5kJ4JJSsJMQ", "cUermn1BMSg"]], ["Deltarune", "Attack of the Killer Queen", ["vBjscyFC3jo", "XR2QQMfeJbg"]], ["Minecraft", "Mice on Venus", ["KdOD0fZs_XU", "DZ47H84Bc_Q"]], ["Minecraft", "Aria Math", ["atgjKEgSqSU"]], ["Stardew Valley", "Summer (Nature's Crescendo)", ["k0nqXeM-sns"]], ["Hades", "Good Riddance", ["Yco-B4BSaj4"]], ["Outer Wilds", "End Times", ["t5vG4Be1Ci8", "WVGlXbApOCs"]], ["Portal 2", "Exile Vilify", ["G-Vg2YS-sFE", "NoA4Cii27ok"]], ["Team Fortress 2", "More Gun", ["6NTfCbfvwM8", "xngw_nwl4sc"]], ["Sonic the Hedgehog 3", "Hydrocity Zone Act 2", ["RPYzgCI6Q1I", "PNYL4w-qxcE"]], ["Sonic Colors", "Reach for the Stars", ["F-jRz2jNtZg", "5eUswq5owJk"]], ["Sonic Unleashed", "Endless Possibility", ["tJjxKhjR9H4"]], ["Street Fighter II", "Chun-Li's Theme", ["H2dgVJy8jZM", "GYkZRFpKS48"]], ["Guilty Gear -Strive-", "Smell of the Game", ["ikQHkhL8YMM", "hf4QAKfIWeg"]], ["Mega Man X", "Spark Mandrill Stage", ["kRqEGDHnauE", "qpRQtn8JQvI"]], ["Mega Man 2", "Air Man Stage", ["IhK4D3ytYMc"]], ["Castlevania III: Dracula's Curse", "Beginning", ["78706bv98S8", "ptgaCJSF7j8"]]];
 
 const ROUND_NAMES = {128:"Ronda de 128",64:"Ronda de 64",32:"Dieciseisavos",16:"Octavos",8:"Cuartos",4:"Semifinales",2:"Final"};
 const SIZES = [16,32,64,128];
@@ -389,11 +408,20 @@ let role = null;            // "host" | "guest"
 let code = null;
 let myId = ls.get("vgm.uid") || ("u" + rid(10)); ls.set("vgm.uid", myId);
 let nick = ls.get("vgm.nick") || "";
+const AVATARS = ["🍄","⭐","🗡️","🛡️","👾","🎮","🐉","👻","💣","🪙","🧙","🤖","🦔","🐸","🦊","🐼","🐧","🍕","🔥","⚡","💎","🎵","🏆","🌙","🐢","🦖","🐙","🌸","🍌","🧊"];
+const COLORS = ["#ff5d62","#3db8ff","#ffc847","#5be39b","#c084fc","#ff9f43","#f472b6","#e5e7eb"];
+let myAv = Math.max(0, Math.min(AVATARS.length - 1, parseInt(ls.get("vgm.av") ?? String(Math.floor(Math.random() * AVATARS.length)), 10) || 0));
+let myCol = Math.max(0, Math.min(COLORS.length - 1, parseInt(ls.get("vgm.col") ?? String(Math.floor(Math.random() * COLORS.length)), 10) || 0));
+ls.set("vgm.av", String(myAv)); ls.set("vgm.col", String(myCol));
+const avIdx = v => Number.isInteger(v) && v >= 0 && v < AVATARS.length ? v : 5;
+const colIdx = v => Number.isInteger(v) && v >= 0 && v < COLORS.length ? v : 7;
+const avHTML = (v, cls = "") => `<span class="av ${cls}" style="--c:${COLORS[colIdx(v && v.col)]}" aria-hidden="true">${AVATARS[avIdx(v && v.av)]}</span>`;
 let S = null;               // estado del torneo (lo manda el anfitrión)
 let voters = {};            // id -> {nick, k, s, on}
 let library = loadLibrary();
 let tab = "duel", bracketRound = null, confirmReset = false, libDirty = false;
-let setup = {size:64, order:"random", hidden:true};
+let setup = {size:64, order:"random", hidden:true, onePer:false, auto:true};
+try { const sv = JSON.parse(ls.get("vgm.setup") || "null"); if (sv && typeof sv === "object") setup = Object.assign(setup, sv); } catch {}
 let peer = null, conns = new Map(), hostConn = null, reconnectT = null;
 
 function loadLibrary(){
@@ -410,14 +438,25 @@ const keyOf = st => st.gid + ":" + st.cur.r + ":" + st.cur.m;
 const pair = (st, r, m) => [st.rounds[r][2*m], st.rounds[r][2*m+1]];
 function doneMatches(st){ let n = 0; for (let r = 1; r < st.rounds.length; r++) for (const w of st.rounds[r]) if (w !== null) n++; return n; }
 
-function newTournament(){
+const gameKey = g => String(g || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
+function poolIdx(){
   let idx = library.map((_, i) => i);
+  if (setup.onePer) {
+    const by = new Map();
+    idx.forEach(i => { const k = gameKey(library[i][0]); if (!by.has(k)) by.set(k, []); by.get(k).push(i); });
+    idx = [...by.values()].map(arr => setup.order === "random" ? arr[Math.floor(Math.random() * arr.length)] : arr[0]).sort((a, b) => a - b);
+  }
+  return idx;
+}
+const poolSize = () => { if (!setup.onePer) return library.length; return new Set(library.map(s => gameKey(s[0]))).size; };
+function newTournament(){
+  let idx = poolIdx();
   if (setup.order === "random") for (let i = idx.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i+1)); [idx[i], idx[j]] = [idx[j], idx[i]]; }
   idx = idx.slice(0, setup.size);
   const songs = idx.map(i => clone(library[i]));
   const rounds = [songs.map((_, i) => i)];
   for (let k = setup.size/2; k >= 1; k /= 2) rounds.push(Array(k).fill(null));
-  return {gid: rid(6), t: Date.now(), songs, rounds, scores:{}, who:{}, miniLog:{}, cur:{r:0, m:0}, status:"voting", hidden:setup.hidden, manual:{a:0,b:0}, reveal:null, mini:null};
+  return {gid: rid(6), t: Date.now(), auto: !!setup.auto, onePer: !!setup.onePer, autoMsg: "", songs, rounds, scores:{}, who:{}, miniLog:{}, cur:{r:0, m:0}, status:"voting", hidden:setup.hidden, manual:{a:0,b:0}, reveal:null, mini:null};
 }
 
 function tally(){
@@ -426,7 +465,7 @@ function tally(){
   for (const [id, v] of Object.entries(voters)) {
     const voted = v.k === k && (v.s === "a" || v.s === "b");
     if (voted) res[v.s]++;
-    res.list.push({id, nick: v.nick || "Jugador", s: voted ? v.s : null, on: v.on, me: id === myId});
+    res.list.push({id, nick: v.nick || "Jugador", av: v.av, col: v.col, s: voted ? v.s : null, on: v.on, me: id === myId});
   }
   if (S && S.manual) { res.a += S.manual.a || 0; res.b += S.manual.b || 0; }
   return res;
@@ -448,14 +487,17 @@ function cleanRec(r){
   if (!r || typeof r !== "object" || typeof r.id !== "string" || !/^[A-Z0-9]{6}$/.test(r.id)) return null;
   if (!Array.isArray(r.songs) || r.songs.length < 2 || r.songs.length > 256) return null;
   const songs = r.songs.map(x => Array.isArray(x) ? [s80(x[0]), s80(x[1])] : ["?", "?"]), n = songs.length;
+  const players = (Array.isArray(r.players) ? r.players : []).slice(0, 40).map(cleanNick).filter(Boolean);
+  const pl = arr => Array.isArray(arr) ? arr.slice(0, 40).map(x => x | 0).filter(x => x >= 0 && x < players.length) : [];
   const res = (Array.isArray(r.res) ? r.res : []).slice(0, 255)
-    .filter(m => Array.isArray(m) && m.length === 5)
-    .map(m => [m[0] | 0, m[1] | 0, Math.max(0, Math.min(999, m[2] | 0)), Math.max(0, Math.min(999, m[3] | 0)), m[4] ? 1 : 0])
+    .filter(m => Array.isArray(m) && m.length >= 5)
+    .map(m => [m[0] | 0, m[1] | 0, Math.max(0, Math.min(999, m[2] | 0)), Math.max(0, Math.min(999, m[3] | 0)), m[4] ? 1 : 0, pl(m[5]), pl(m[6])])
     .filter(m => m[0] >= 0 && m[0] < n && m[1] >= 0 && m[1] < n && m[0] !== m[1]);
   const champ = Number.isInteger(r.champ) && r.champ >= 0 && r.champ < n ? r.champ : null;
-  const players = (Array.isArray(r.players) ? r.players : []).slice(0, 40).map(cleanNick).filter(Boolean);
+  const av = {};
+  if (r.av && typeof r.av === "object") for (const p of players) { const x = r.av[p]; if (Array.isArray(x)) av[p] = [avIdx(x[0]), colIdx(x[1])]; }
   const t = Math.max(0, Number(r.t) || 0), u = Math.max(t, Number(r.u) || 0);
-  return {id: r.id, t, u, size: n, songs, res, champ, players};
+  return {id: r.id, t, u, size: n, songs, res, champ, players, av};
 }
 function histMerge(recs){
   const changed = [];
@@ -468,23 +510,47 @@ function histMerge(recs){
   return changed;
 }
 function recFromS(st){
+  const prev = hist[st.gid];
+  const whoNames = Object.values(st.who || {}).flatMap(w => [...(w.a || []), ...(w.b || [])]);
+  const players = Array.from(new Set([...(prev ? prev.players : []), ...Object.values(voters).map(v => cleanNick(v.nick)), ...whoNames.map(cleanNick)].filter(Boolean))).slice(0, 40);
+  const pidx = arr => (arr || []).map(x => players.indexOf(cleanNick(x))).filter(i => i >= 0);
   const res = [];
   for (let r = 0; r < st.rounds.length - 1; r++) for (let m = 0; m < (st.rounds[r].length >> 1); m++) {
-    const w = st.rounds[r+1][m], sc = st.scores[r + "-" + m];
+    const w = st.rounds[r+1][m], sc = st.scores[r + "-" + m], wv = (st.who || {})[r + "-" + m] || {};
     if (w === null || w === undefined) continue;
     const [ia, ib] = pair(st, r, m);
     if (ia === null || ib === null) continue;
-    res.push([ia, ib, sc ? sc[0] : 0, sc ? sc[1] : 0, w === ib ? 1 : 0]);
+    res.push([ia, ib, sc ? sc[0] : 0, sc ? sc[1] : 0, w === ib ? 1 : 0, pidx(wv.a), pidx(wv.b)]);
   }
   const champ = st.rounds[lastRound(st) + 1][0];
-  const prev = hist[st.gid];
-  const players = Array.from(new Set([...(prev ? prev.players : []), ...Object.values(voters).map(v => cleanNick(v.nick)).filter(Boolean)])).slice(0, 40);
-  return {id: st.gid, t: st.t || Date.now(), u: Date.now(), size: sizeOf(st), songs: st.songs.map(s => [s[0], s[1]]), res, champ: Number.isInteger(champ) ? champ : null, players};
+  const av = Object.assign({}, prev ? prev.av : {});
+  for (const v of Object.values(voters)) { const nk = cleanNick(v.nick); if (nk && players.includes(nk)) av[nk] = [avIdx(v.av), colIdx(v.col)]; }
+  return {id: st.gid, t: st.t || Date.now(), u: Date.now(), size: sizeOf(st), songs: st.songs.map(s => [s[0], s[1]]), res, champ: Number.isInteger(champ) ? champ : null, players, av};
 }
 function recordProgress(){
   if (role !== "host" || !S) return;
   const changed = histMerge([recFromS(S)]);
   if (changed.length) sendAll({t:"hist", recs: changed});
+}
+function playerStats(){
+  const m = new Map();
+  const get = (nk, r) => { let o = m.get(nk); if (!o) { o = {nick: nk, games: 0, votes: 0, maj: 0, champs: 0, fav: new Map(), av: null, u: 0}; m.set(nk, o); } if (r && r.av && r.av[nk] && r.u >= o.u) { o.av = {av: r.av[nk][0], col: r.av[nk][1]}; o.u = r.u; } return o; };
+  for (const r of Object.values(hist)) {
+    const seenG = new Set();
+    for (const [ia, ib, , , w, A, B] of r.res) {
+      for (const [list, side] of [[A || [], 0], [B || [], 1]]) for (const pi of list) {
+        const nk = r.players[pi]; if (!nk) continue;
+        const o = get(nk, r); o.votes++; seenG.add(nk);
+        if (side === w) o.maj++;
+        const g = r.songs[side ? ib : ia][0]; o.fav.set(g, (o.fav.get(g) || 0) + 1);
+      }
+    }
+    for (const nk of r.players) { const o = get(nk, r); o.games++; }
+  }
+  return [...m.values()].filter(o => o.votes > 0).map(o => {
+    let fav = "", fv = 0; for (const [g, c] of o.fav) if (c > fv) { fv = c; fav = g; }
+    return Object.assign(o, {favG: fav, pct: o.votes ? Math.round(o.maj / o.votes * 100) : 0});
+  }).sort((a, b) => b.votes - a.votes);
 }
 function topStats(){
   const m = new Map();
@@ -522,7 +588,7 @@ function startHost(existing){
   role = "host";
   code = existing || rid(4);
   if (!voters[myId]) voters[myId] = {nick: nick || "Anfitrión", k:null, s:null, on:true};
-  voters[myId].on = true; voters[myId].nick = nick || "Anfitrión";
+  voters[myId].on = true; voters[myId].nick = nick || "Anfitrión"; voters[myId].av = myAv; voters[myId].col = myCol;
   history.replaceState(null, "", "#" + code);
   render();
   startHostRelay();
@@ -531,7 +597,7 @@ function startHost(existing){
 function setupHostConn(c){
   c.on("open", () => { conns.set(c.peer, c); });
   c.on("data", d => onHostData(c, d));
-  c.on("close", () => { if (conns.get(c.peer) === c) conns.delete(c.peer); for (const v of Object.values(voters)) if (v.peer === c.peer) v.on = false; broadcast(); renderLive(); setNet(); updateMiniProgress(); });
+  c.on("close", () => { if (conns.get(c.peer) === c) conns.delete(c.peer); for (const v of Object.values(voters)) if (v.peer === c.peer) v.on = false; broadcast(); renderLive(); setNet(); updateMiniProgress(); autoCheck(); });
   c.on("error", () => {});
 }
 function openHostPeer(){
@@ -558,7 +624,7 @@ function onHostData(c, d){
   if (d.t === "hello") {
     const prev = voters[id] || {k:null, s:null};
     if (!prev.on) SFX.play("join");
-    voters[id] = {nick: cleanNick(d.nick) || "Jugador", k: prev.k, s: prev.s, on: true, peer: c.peer};
+    voters[id] = {nick: cleanNick(d.nick) || "Jugador", av: avIdx(d.av), col: colIdx(d.col), k: prev.k, s: prev.s, on: true, peer: c.peer};
     broadcast(); renderLive(); setNet(); updateMiniProgress();
     if (d.first) sendHistTo(c);
   } else if (d.t === "hist") {
@@ -569,7 +635,9 @@ function onHostData(c, d){
   } else if (d.t === "mact" && voters[id]) {
     teamAct(id, d);
   } else if (d.t === "vote" && voters[id] && S && S.status === "voting") {
-    if (d.k === keyOf(S) && (d.s === "a" || d.s === "b" || d.s === null)) { voters[id].k = d.s ? d.k : null; voters[id].s = d.s; broadcast(); renderLive(); }
+    if (d.k === keyOf(S) && (d.s === "a" || d.s === "b" || d.s === null)) { voters[id].k = d.s ? d.k : null; voters[id].s = d.s; broadcast(); renderLive(); autoCheck(); }
+  } else if (d.t === "prof" && voters[id]) {
+    voters[id].nick = cleanNick(d.nick) || voters[id].nick; voters[id].av = avIdx(d.av); voters[id].col = colIdx(d.col); broadcast(); renderLive(); updateMiniProgress();
   } else if (d.t === "nick" && voters[id]) {
     voters[id].nick = cleanNick(d.nick) || "Jugador"; broadcast(); renderLive();
   }
@@ -718,9 +786,9 @@ function attachGuestConn(c){
   hostConn = c;
   c.on("open", () => {
     if (c !== hostConn) return;
-    setNet(); c.send({t:"hello", id: myId, nick: nick || "Jugador", first: true});
+    setNet(); c.send({t:"hello", id: myId, nick: nick || "Jugador", av: myAv, col: myCol, first: true});
     sendHistTo(c);
-    const hi = setInterval(() => { if (c !== hostConn || !c.open) return clearInterval(hi); if (!S) { try { c.send({t:"hello", id: myId, nick: nick || "Jugador"}); } catch {} } else clearInterval(hi); }, 3000);
+    const hi = setInterval(() => { if (c !== hostConn || !c.open) return clearInterval(hi); if (!S) { try { c.send({t:"hello", id: myId, nick: nick || "Jugador", av: myAv, col: myCol}); } catch {} } else clearInterval(hi); }, 3000);
   });
   c.on("data", d => {
     if (!d || c !== hostConn) return;
@@ -744,8 +812,9 @@ function send(msg){
 }
 function onHostLocal(msg){
   if (msg.t === "mini") { miniSubmit(myId, msg.mid, msg.sc); return; }
+  if (msg.t === "prof") return;
   if (msg.t === "mact") { teamAct(myId, msg); return; }
-  if (msg.t === "vote" && S && S.status === "voting") { voters[myId].k = msg.s ? msg.k : null; voters[myId].s = msg.s; }
+  if (msg.t === "vote" && S && S.status === "voting") { voters[myId].k = msg.s ? msg.k : null; voters[myId].s = msg.s; setTimeout(autoCheck, 0); }
   if (msg.t === "nick") voters[myId].nick = cleanNick(msg.nick) || "Anfitrión";
   broadcast(); renderLive();
 }
@@ -763,7 +832,30 @@ function setNet(txt){
 }
 
 /* ---------- acciones del anfitrión ---------- */
-function act(fn){ if (role !== "host" || !S) return; fn(S); broadcast(); stateSounds(); syncMini(); }
+function act(fn){ if (role !== "host" || !S) return; fn(S); broadcast(); stateSounds(); syncMini(); setTimeout(autoCheck, 0); }
+
+/* ---------- modo automático: si votan todos se cierra, y tras el resultado pasa solo ---------- */
+let autoT = null, autoKind = null;
+function autoClear(){ clearTimeout(autoT); autoT = null; autoKind = null; if (S && S.autoMsg) { S.autoMsg = ""; broadcast(); renderStageState(); } }
+function autoCheck(){
+  if (role !== "host" || !S || !S.auto) return;
+  const k = keyOf(S);
+  if (S.status === "voting") {
+    const on = Object.values(voters).filter(v => v.on);
+    const all = on.length > 0 && on.every(v => v.k === k && (v.s === "a" || v.s === "b"));
+    if (all && autoKind !== "close") {
+      clearTimeout(autoT); autoKind = "close";
+      S.autoMsg = "¡Han votado todos! Se cierra la votación en 3 segundos…"; broadcast(); renderStageState();
+      autoT = setTimeout(() => { autoKind = null; S.autoMsg = ""; if (S && S.status === "voting" && keyOf(S) === k) closeVoting(); }, 3000);
+    } else if (!all && autoKind === "close") autoClear();
+  } else if (S.status === "reveal") {
+    if (autoKind === "next") return;
+    clearTimeout(autoT); autoKind = "next";
+    const last = S.cur.r === lastRound(S);
+    S.autoMsg = last ? "Coronando a la campeona en 6 segundos…" : "Siguiente duelo en 6 segundos…"; broadcast(); renderStageState();
+    autoT = setTimeout(() => { autoKind = null; if (S && S.status === "reveal" && keyOf(S) === k) { S.autoMsg = ""; nextMatch(); } }, 6000);
+  } else if (autoKind) { clearTimeout(autoT); autoT = null; autoKind = null; if (S.autoMsg) { S.autoMsg = ""; broadcast(); } }
+}
 function closeVoting(){
   const t = tally();
   const {a, b} = t;
@@ -794,12 +886,14 @@ function coinFlip(why){
   pickWinner(side, "coin");
 }
 function reopen(){
-  clearTimeout(miniTimer); stopTeamRun();
+  clearTimeout(miniTimer); stopTeamRun(); clearTimeout(autoT); autoT = null; autoKind = null;
   act(n => { const {r, m} = n.cur, key = r + "-" + m; n.rounds[r+1][m] = null; delete n.scores[key]; if (n.who) delete n.who[key]; if (n.miniLog) delete n.miniLog[key]; n.reveal = null; n.mini = null; n.status = "voting"; });
   recordProgress(); renderStageState(); renderLive();
 }
 function nextMatch(){
+  clearTimeout(autoT); autoT = null; autoKind = null;
   act(n => {
+    n.autoMsg = "";
     let {r, m} = n.cur;
     if (r === lastRound(n)) { n.status = "done"; return; }
     m++; if (m >= matchesIn(n, r)) { r++; m = 0; }
@@ -864,9 +958,11 @@ function mountPlayer(slot, song){
 /* ---------- minijuegos de desempate ---------- */
 const MINIGAMES = [
   {id:"kirby", name:"Desenfunda", ref:"Inspirado en Samurai Kirby · Kirby Super Star", how:"Espera a que salga «¡!» y pulsa lo más rápido que puedas (toca la pantalla o barra espaciadora). Si pulsas antes de tiempo, esa ronda vale 0. Son 3 rondas.", dur:24, run: runKirby},
-  {id:"mash", name:"Machaca el botón", ref:"Inspirado en los minijuegos de Mario Party", how:"Pulsa el botón (o la barra espaciadora) todas las veces que puedas en 7 segundos.", dur:12, run: runMash},
   {id:"ocarina", name:"La Ocarina del Tiempo", ref:"Inspirado en The Legend of Zelda: Ocarina of Time", how:"Escucha la melodía y repítela con los botones de la ocarina. Cada vez que aciertas, la melodía tiene una nota más. Al primer fallo se acaba.", dur:80, run: runOcarina},
   {id:"diglett", name:"¡Golpea a los Diglett!", ref:"Inspirado en Pokémon Stadium", how:"Toca a los Diglett en cuanto asomen (+1). Cuidado con los Voltorb: si los tocas, −2. Dura 15 segundos.", dur:20, run: runDiglett},
+  {id:"rhythm", name:"Ritmo perfecto", ref:"Inspirado en Rhythm Heaven", how:"Caen notas por la pista: pulsa (o barra espaciadora) justo cuando lleguen a la línea dorada. Cuanto más exacto, más puntos, y la racha suma extra. Pulsar sin nota rompe la racha.", dur:24, run: runRhythm},
+  {id:"memory", name:"Parejas de cartas", ref:"Inspirado en el juego de cartas de Super Mario Bros. 3", how:"Destapa las cartas de dos en dos y encuentra las 9 parejas. 100 puntos por pareja y, si las encuentras todas, bonus por el tiempo que te sobre. 40 segundos.", dur:45, run: runMemory},
+  {id:"clock", name:"Para el reloj", ref:"Inspirado en los microjuegos de WarioWare", how:"El reloj empieza a contar pero a los 1,5 s se oculta. Páralo lo más cerca posible del tiempo objetivo. 3 rondas: gana quien más se acerque.", dur:30, run: runClock},
   {id:"brain", name:"Cálculo exprés", ref:"Inspirado en Brain Training del Dr. Kawashima", how:"Resuelve todas las cuentas que puedas en 20 segundos. Acierto +1, fallo −1.", dur:25, run: runBrain},
 ];
 const gameById = id => MINIGAMES.find(g => g.id === id);
@@ -898,17 +994,6 @@ function runKirby(ar, R, done){
   const offK = onKey(press);
   startRound();
   return () => { clearTimeout(timer); ar.removeEventListener("pointerdown", press); offK(); };
-}
-
-function runMash(ar, R, done){
-  let n = 0, left = 7, live = true;
-  ar.innerHTML = `<div class="hud"><span>Tiempo <b id="mt">7</b>s</span><span>Pulsaciones <b id="mn">0</b></span></div><button class="mashbtn" type="button" id="mashBtn">¡PULSA!</button>`;
-  const btn = ar.querySelector("#mashBtn");
-  const hit = () => { if (!live) return; n++; ar.querySelector("#mn").textContent = n; if (n % 5 === 0) SFX.play("tick"); };
-  btn.addEventListener("pointerdown", hit);
-  const offK = onKey(hit);
-  const iv = setInterval(() => { left--; ar.querySelector("#mt").textContent = Math.max(0, left); if (left <= 0) { live = false; clearInterval(iv); btn.disabled = true; btn.textContent = n; SFX.play("go"); setTimeout(() => done(n), 900); } }, 1000);
-  return () => { clearInterval(iv); offK(); };
 }
 
 function runOcarina(ar, R, done){
@@ -945,7 +1030,7 @@ function runOcarina(ar, R, done){
 
 function runDiglett(ar, R, done){
   const DUR = 15000, events = [];
-  for (let t = 500; t < DUR - 600;) { events.push({t, h: Math.floor(R() * 9), bomb: R() < .2, up: 700 + R() * 450}); t += 380 + R() * 420; }
+  for (let t = 500; t < DUR - 600;) { const f = 1 - t / DUR * .45; events.push({t, h: Math.floor(R() * 9), bomb: R() < .22, up: (650 + R() * 400) * f}); t += (360 + R() * 400) * f; }
   let score = 0, left = 15, timers = [];
   ar.innerHTML = `<div class="hud"><span>Tiempo <b id="dt">15</b>s</span><span>Puntos <b id="dp">0</b></span></div><div class="holes">${Array.from({length: 9}, (_, i) => `<button class="hole" type="button" data-h="${i}" aria-label="Agujero ${i+1}"></button>`).join("")}</div>`;
   const holes = [...ar.querySelectorAll(".hole")];
@@ -1184,6 +1269,97 @@ function paintTeam(){
   if (P.phase === "end" && !miniLocal.ended) { miniLocal.ended = true; if (miniLocal.cleanup) { try { miniLocal.cleanup(); } catch {} miniLocal.cleanup = null; } SFX.play("go"); }
 }
 
+function runRhythm(ar, R, done){
+  const notes = []; let t = 1800;
+  for (let i = 0; i < 16; i++) { notes.push({t, hit: false}); t += [430, 430, 860, 645][Math.floor(R() * 4)]; }
+  const END = t + 900, FALL = 1300;
+  let score = 0, streak = 0, raf = 0, t0 = performance.now(), finished = false;
+  ar.innerHTML = `<div class="hud"><span>Puntos <b class="rp">0</b></span><span class="rs">Racha 0</span></div><div class="lane"><div class="hitline"></div><div class="rfb"></div></div>`;
+  const lane = ar.querySelector(".lane"), fb = ar.querySelector(".rfb");
+  const els = notes.map(() => { const d = document.createElement("i"); d.className = "rnote"; lane.appendChild(d); return d; });
+  const show = (txt, cls) => { fb.textContent = txt; fb.className = "rfb " + cls; };
+  function frame(){
+    const now = performance.now() - t0, h = lane.clientHeight - 70;
+    notes.forEach((n, i) => {
+      const p = 1 - (n.t - now) / FALL;
+      els[i].style.display = n.hit || p < 0 || p > 1.25 ? "none" : "block";
+      els[i].style.transform = `translateY(${Math.min(p, 1.25) * h}px)`;
+      if (!n.hit && !n.miss && now - n.t > 220) { n.miss = true; streak = 0; show("Fallo", "bad"); ar.querySelector(".rs").textContent = "Racha 0"; }
+    });
+    if (now > END) { if (!finished) { finished = true; done(score); } return; }
+    raf = requestAnimationFrame(frame);
+  }
+  function tap(){
+    const now = performance.now() - t0;
+    let best = null, bd = 1e9;
+    for (const n of notes) { if (n.hit || n.miss) continue; const d = Math.abs(n.t - now); if (d < bd) { bd = d; best = n; } }
+    if (!best || bd > 220) { SFX.play("miss"); streak = 0; show("¡Fuera de ritmo!", "bad"); return; }
+    best.hit = true; streak++;
+    const pts = bd < 60 ? 100 : bd < 130 ? 60 : 25;
+    score += pts + Math.min(streak, 10) * 5;
+    SFX.play("note", bd < 60 ? 1046.5 : 784);
+    show(bd < 60 ? "¡Perfecto!" : bd < 130 ? "Bien" : "Justo", bd < 60 ? "ok" : "");
+    ar.querySelector(".rp").textContent = score; ar.querySelector(".rs").textContent = "Racha " + streak;
+  }
+  const beat = setInterval(() => SFX.play("tick"), 430);
+  setTimeout(() => clearInterval(beat), 1720);
+  ar.addEventListener("pointerdown", tap);
+  const offK = onKey(tap);
+  raf = requestAnimationFrame(frame);
+  return () => { cancelAnimationFrame(raf); clearInterval(beat); ar.removeEventListener("pointerdown", tap); offK(); };
+}
+
+function runMemory(ar, R, done){
+  const ICONS = ["🍄","⭐","🌸","🪙","🔥","🐢","👻","💣","🍃"];
+  const deck = [...ICONS, ...ICONS];
+  for (let i = deck.length - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)); [deck[i], deck[j]] = [deck[j], deck[i]]; }
+  let open = [], found = 0, busy = false, left = 40, fin = false;
+  ar.innerHTML = `<div class="hud"><span>Tiempo <b class="mt">40</b>s</span><span>Parejas <b class="mf">0</b>/9</span></div><div class="cards">${deck.map((_, i) => `<button class="card2" type="button" data-i="${i}" aria-label="Carta ${i+1}"></button>`).join("")}</div>`;
+  const cards = [...ar.querySelectorAll(".card2")];
+  const finish = () => { if (fin) return; fin = true; clearInterval(iv); cards.forEach(c => c.disabled = true); setTimeout(() => done(found * 100 + (found === 9 ? left * 10 : 0)), 900); };
+  const click = e => {
+    const c = e.target.closest(".card2"); if (!c || busy || fin) return;
+    const i = +c.dataset.i; if (c.classList.contains("up")) return;
+    c.classList.add("up"); c.textContent = deck[i]; SFX.play("click"); open.push(i);
+    if (open.length === 2) {
+      const [a, b] = open; open = [];
+      if (deck[a] === deck[b]) { found++; SFX.play("hit"); cards[a].classList.add("ok"); cards[b].classList.add("ok"); ar.querySelector(".mf").textContent = found; if (found === 9) finish(); }
+      else { busy = true; setTimeout(() => { [a, b].forEach(k => { cards[k].classList.remove("up"); cards[k].textContent = ""; }); busy = false; }, 650); }
+    }
+  };
+  ar.addEventListener("click", click);
+  const iv = setInterval(() => { left--; ar.querySelector(".mt").textContent = Math.max(0, left); if (left <= 0) { SFX.play("go"); finish(); } }, 1000);
+  return () => { clearInterval(iv); ar.removeEventListener("click", click); };
+}
+
+function runClock(ar, R, done){
+  const targets = [0, 1, 2].map(() => 3 + Math.round(R() * 30) / 10);
+  let round = 0, total = 0, t0 = 0, running = false, raf = 0, tm = null;
+  ar.innerHTML = `<div class="hud"><span>Ronda <b class="cr">1</b>/3</span><span>Puntos <b class="cp">0</b></span></div><div><div class="sub ct"></div><div class="big cn">0.00</div><div class="sub cm">Pulsa para empezar a contar</div></div>`;
+  const cn = ar.querySelector(".cn"), cm = ar.querySelector(".cm");
+  function prep(){
+    running = false; ar.querySelector(".cr").textContent = round + 1;
+    ar.querySelector(".ct").innerHTML = `Para el reloj en <b style="color:var(--gold)">${targets[round].toFixed(2)} s</b>`;
+    cn.textContent = "0.00"; cm.textContent = "Se empieza solo en un momento…";
+    tm = setTimeout(start, 1500);
+  }
+  function start(){ running = true; t0 = performance.now(); cm.textContent = "¡Pulsa cuando creas que llega!"; SFX.play("tick"); raf = requestAnimationFrame(tick); }
+  function tick(){ const s = (performance.now() - t0) / 1000; cn.textContent = s < 1.5 ? s.toFixed(2) : "?.??"; raf = requestAnimationFrame(tick); }
+  function press(){
+    if (!running) return;
+    running = false; cancelAnimationFrame(raf);
+    const s = (performance.now() - t0) / 1000, err = Math.abs(s - targets[round]);
+    const pts = Math.max(0, Math.round(1000 - err * 1000));
+    total += pts; cn.textContent = s.toFixed(2); cm.textContent = (err < .05 ? "¡Clavado! " : "") + "Te has desviado " + err.toFixed(2) + " s · +" + pts;
+    SFX.play(err < .1 ? "win" : err < .4 ? "hit" : "miss");
+    ar.querySelector(".cp").textContent = total; round++;
+    tm = setTimeout(round >= 3 ? () => done(total) : prep, 1700);
+  }
+  ar.addEventListener("pointerdown", press);
+  const offK = onKey(press);
+  prep();
+  return () => { clearTimeout(tm); cancelAnimationFrame(raf); ar.removeEventListener("pointerdown", press); offK(); };
+}
 /* lado del anfitrión */
 let miniTimer = null;
 function startMini(tried){
@@ -1301,7 +1477,7 @@ function updateMiniProgress(){
   const M = S.mini, [ia, ib] = pair(S, S.cur.r, S.cur.m);
   const list = side => Object.keys(M.teams).filter(id => M.teams[id] === side).map(id => {
     const v = voters[id] || {}, d = M.res[id] !== undefined;
-    return `<span class="pill ${d ? "done" : ""} ${v.on ? "" : "off"}"><i></i>${esc(v.nick || "Jugador")}${id === myId ? " (tú)" : ""}${d ? " · <b>" + M.res[id] + "</b>" : ""}</span>`;
+    return `<span class="pill ${d ? "done" : ""} ${v.on ? "" : "off"}"><i></i>${avHTML(v)}${esc(v.nick || "Jugador")}${id === myId ? " (tú)" : ""}${d ? " · <b>" + M.res[id] + "</b>" : ""}</span>`;
   }).join("");
   box.innerHTML = `<div class="res"><div class="a"><span>Equipo ${esc(S.songs[ia][1])}</span><div class="prog">${list("a")}</div></div><div class="b"><span>Equipo ${esc(S.songs[ib][1])}</span><div class="prog">${list("b")}</div></div></div>`;
   const hb = $("#miniHost");
@@ -1348,7 +1524,7 @@ function renderHome(){
   return `<section class="home">
     <h1>Bracket de <span>bandas sonoras</span></h1>
     <p>Duelos 1 contra 1 entre canciones de videojuegos. Escucháis las dos aquí mismo, votáis cada uno desde su PC y la más votada pasa de ronda hasta que quede una campeona.</p>
-    <label class="field"><span>Tu nombre</span><input class="inp" id="nick" maxlength="20" placeholder="Por ejemplo: Fitxi" value="${esc(nick)}" autocomplete="off"></label>
+    ${profileHTML()}
     <div class="choices">
       <div class="choice">
         <h2>Crear sala</h2>
@@ -1377,7 +1553,7 @@ function renderDuel(){
 }
 
 function renderLobby(){
-  const n = library.length;
+  const n = poolSize();
   const sizeBtns = SIZES.map(sz => `<button type="button" data-act="size" data-v="${sz}" aria-pressed="${setup.size===sz}" ${n < sz ? "disabled" : ""}>${sz}<small>${Math.log2(sz)} rondas · ${sz-1} duelos</small></button>`).join("");
   return `<section class="lobby">
     <div class="invite"><span>Código de la sala</span><span class="big">${esc(code)}</span><span class="lnk" id="invLink">${esc(inviteLink())}</span><button class="btn sm" data-act="copy">Copiar enlace</button></div>
@@ -1387,11 +1563,19 @@ function renderLobby(){
       <button type="button" data-act="order" data-v="random" aria-pressed="${setup.order==="random"}">Al azar</button>
       <button type="button" data-act="order" data-v="list" aria-pressed="${setup.order==="list"}">En el orden de la lista</button>
     </div></div>
+    <div class="field"><span>Canciones por juego</span><div class="seg">
+      <button type="button" data-act="oneper" data-v="0" aria-pressed="${!setup.onePer}">Todas</button>
+      <button type="button" data-act="oneper" data-v="1" aria-pressed="${setup.onePer}">Solo una por juego<small>${new Set(library.map(s => gameKey(s[0]))).size} juegos distintos</small></button>
+    </div></div>
+    <div class="field"><span>Ritmo de la partida</span><div class="seg">
+      <button type="button" data-act="auto" data-v="1" aria-pressed="${setup.auto}">Automático<small>si votan todos se cierra y pasa solo</small></button>
+      <button type="button" data-act="auto" data-v="0" aria-pressed="${!setup.auto}">Manual<small>el anfitrión cierra y pasa</small></button>
+    </div></div>
     <div class="field"><span>Votos durante el duelo</span><div class="seg">
       <button type="button" data-act="hidden" data-v="1" aria-pressed="${setup.hidden}">Ocultos hasta cerrar</button>
       <button type="button" data-act="hidden" data-v="0" aria-pressed="${!setup.hidden}">En directo</button>
     </div></div>
-    <p class="hint">Hay ${n} canciones en la lista. ${n > setup.size ? (setup.order==="random" ? `Entran ${setup.size} al azar.` : `Entran las ${setup.size} primeras.`) : ""} Puedes cambiar la lista en la pestaña Canciones.</p>
+    <p class="hint">${setup.onePer ? `Hay ${n} juegos distintos (se elige una canción de cada uno).` : `Hay ${n} canciones en la lista.`} ${n > setup.size ? (setup.order==="random" ? `Entran ${setup.size} al azar.` : `Entran las ${setup.size} primeras.`) : ""} Puedes cambiar la lista en la pestaña Canciones.</p>
     <div class="voters" id="voters"></div>
     <div><button class="btn primary" data-act="start" ${n < setup.size ? "disabled" : ""}>Empezar torneo</button></div>
   </section>`;
@@ -1449,10 +1633,11 @@ function renderStageState(){
     const reset = confirmReset
       ? `<div class="confirm">¿Borrar el torneo en curso? Se pierden todos los resultados. <button class="btn danger" data-act="reset-yes">Sí, reiniciar</button><button class="btn ghost" data-act="reset-no">Cancelar</button></div>`
       : `<div><button class="btn ghost sm" data-act="reset">Reiniciar torneo</button></div>`;
-    ctrl.innerHTML = `<section class="host"><div class="host-h">Panel del anfitrión</div>${c}${reset}</section>`;
+    ctrl.innerHTML = (S.autoMsg ? `<div class="autonote">⏱ ${esc(S.autoMsg)}</div>` : "") + `<section class="host"><div class="host-h">Panel del anfitrión${S.auto ? " · modo automático" : ""}</div>${c}${reset}</section>`;
   } else {
     ctrl.innerHTML = S.status === "tie" || S.status === "mini" ? `<div class="notice" style="margin-top:16px"><strong>Empate ${S.reveal ? S.reveal.a + "–" + S.reveal.b : ""}.</strong> Se decide con un minijuego.</div>`
-      : S.status === "reveal" ? miniBanner() + `<div class="notice" style="margin-top:16px">Esperando a que el anfitrión pase al siguiente duelo.</div>` : "";
+      : S.status === "reveal" ? miniBanner() + (S.auto ? "" : `<div class="notice" style="margin-top:16px">Esperando a que el anfitrión pase al siguiente duelo.</div>`) : "";
+    if (S.autoMsg) ctrl.innerHTML = `<div class="autonote">⏱ ${esc(S.autoMsg)}</div>` + ctrl.innerHTML;
   }
 }
 
@@ -1460,7 +1645,7 @@ function renderLive(){
   setNet(netOverride);
   const vEl = $("#voters");
   if (!S || S.status === "done" || !$("#card-a")) {
-    if (vEl) { const t = tally(); vEl.innerHTML = `<span class="lbl">En la sala</span>` + t.list.map(v => `<span class="pill ${v.on ? "" : "off"}"><i></i>${esc(v.nick)}${v.me ? " (tú)" : ""}</span>`).join(""); }
+    if (vEl) { const t = tally(); vEl.innerHTML = `<span class="lbl">En la sala</span>` + t.list.map(v => `<span class="pill ${v.on ? "" : "off"}">${avHTML(v)}${esc(v.nick)}${v.me ? " (tú)" : ""}</span>`).join(""); }
     return;
   }
   const k = keyOf(S), me = voters[myId], mine = me && me.k === k ? me.s : null;
@@ -1487,15 +1672,16 @@ function renderLive(){
   ["a", "b"].forEach(side => {
     const box = $("#who-" + side); if (!box) return;
     if (!show) { box.innerHTML = ""; return; }
-    const names = saved ? saved[side].map(n => ({nick: n, me: n === (voters[myId] || {}).nick}))
-      : t.list.filter(v => v.s === side).map(v => ({nick: v.nick, me: v.me}));
+    const byNick = nk => Object.values(voters).find(v => v.nick === nk) || {};
+    const names = saved ? saved[side].map(n => ({nick: n, me: n === (voters[myId] || {}).nick, av: byNick(n).av, col: byNick(n).col}))
+      : t.list.filter(v => v.s === side).map(v => ({nick: v.nick, me: v.me, av: v.av, col: v.col}));
     const man = saved ? saved["m" + side] : (mm[side] || 0);
-    box.innerHTML = names.length || man ? `<span class="lbl">La han votado:</span>` + names.map(n => `<span class="nm ${n.me ? "me" : ""}">${esc(n.nick)}</span>`).join("") + (man ? `<span class="nm">+${man} a mano</span>` : "") : `<span class="lbl">Nadie la ha votado</span>`;
+    box.innerHTML = names.length || man ? `<span class="lbl">La han votado:</span>` + names.map(n => `<span class="nm ${n.me ? "me" : ""}">${avHTML(n)} ${esc(n.nick)}</span>`).join("") + (man ? `<span class="nm">+${man} a mano</span>` : "") : `<span class="lbl">Nadie la ha votado</span>`;
   });
   vEl.innerHTML = `<span class="lbl">${voting ? (votedN + " de " + (t.list.filter(v => v.on).length + (mm.a||0) + (mm.b||0)) + " han votado") : "Votos"}</span>` + t.list.map(v => {
     const c = v.s ? (S.hidden && voting ? "voted" : "s" + v.s) : "";
     const tail = v.s ? (S.hidden && voting ? ` <span class="arrow">✓ ya ha votado</span>` : ` <span class="arrow">→ ${esc(title(v.s))}</span>`) : (voting && v.on ? ` <span class="arrow">· pensando…</span>` : "");
-    return `<span class="pill ${c} ${v.on ? "" : "off"}"><i></i>${esc(v.nick)}${v.me ? " (tú)" : ""}${tail}</span>`;
+    return `<span class="pill ${c} ${v.on ? "" : "off"}"><i></i>${avHTML(v)}${esc(v.nick)}${v.me ? " (tú)" : ""}${tail}</span>`;
   }).join("");
 }
 
@@ -1555,6 +1741,8 @@ function renderTop(){
     <h2>Top 100 de canciones</h2>
     <p class="hint">Se calcula con todas las partidas que conoce este dispositivo. Se comparte entre todos los que jugáis juntos: cada vez que alguien entra en una sala, el anfitrión y él juntan sus historiales. Orden: torneos ganados, luego duelos ganados, luego % de votos.</p>
     ${table}
+    <h2>Jugadores</h2>
+    ${(() => { const ps = playerStats(); return ps.length ? `<div class="scroll"><table class="rank"><thead><tr><th></th><th>Jugador</th><th style="text-align:right">Partidas</th><th style="text-align:right">Votos</th><th style="text-align:right" title="Veces que votó la canción que acabó pasando">Acierto</th><th>Juego favorito</th></tr></thead><tbody>${ps.map(p => `<tr><td>${avHTML(p.av || {})}</td><td><b>${esc(p.nick)}</b></td><td class="n">${p.games}</td><td class="n">${p.votes}</td><td class="n">${p.pct}%</td><td class="g">${esc(p.favG)}</td></tr>`).join("")}</tbody></table></div><p class="hint">«Acierto» es el % de veces que votó la canción que acabó pasando de ronda.</p>` : `<div class="notice">Las estadísticas de jugadores aparecen en cuanto se cierre algún duelo.</div>`; })()}
     <h2>Últimas partidas</h2>
     ${games}
   </section>`;
@@ -1620,10 +1808,14 @@ document.addEventListener("click", e => {
     case "mini": if (S && S.status === "tie") startMini([]); break;
     case "mini-end": if (S && S.mini) finishMini(S.mini.id, teamRun && teamRun.mid === S.mini.id && teamRun.phase === "play" ? teamRun.G.result(teamRun.L) : undefined); break;
     case "mini-coin": coinFlip(""); break;
-    case "size": setup.size = +el.dataset.v; render(); break;
-    case "order": setup.order = el.dataset.v; render(); break;
-    case "hidden": setup.hidden = el.dataset.v === "1"; render(); break;
-    case "start": if (library.length >= setup.size) { S = newTournament(); for (const v of Object.values(voters)) { v.k = null; v.s = null; } broadcast(); render(); } break;
+    case "size": setup.size = +el.dataset.v; saveSetup(); render(); break;
+    case "order": setup.order = el.dataset.v; saveSetup(); render(); break;
+    case "hidden": setup.hidden = el.dataset.v === "1"; saveSetup(); render(); break;
+    case "oneper": setup.onePer = el.dataset.v === "1"; if (poolSize() < setup.size) setup.size = SIZES.filter(z => z <= poolSize()).pop() || 16; saveSetup(); render(); break;
+    case "auto": setup.auto = el.dataset.v === "1"; if (S) { S.auto = setup.auto; broadcast(); autoCheck(); } saveSetup(); render(); break;
+    case "av": myAv = avIdx(+el.dataset.v); ls.set("vgm.av", String(myAv)); profChanged(); break;
+    case "col": myCol = colIdx(+el.dataset.v); ls.set("vgm.col", String(myCol)); profChanged(); break;
+    case "start": if (poolSize() >= setup.size) { S = newTournament(); for (const v of Object.values(voters)) { v.k = null; v.s = null; } broadcast(); render(); } break;
     case "vote": {
       if (!S || S.status !== "voting") break;
       const k = keyOf(S), me = voters[myId], cur = me && me.k === k ? me.s : null;
@@ -1662,6 +1854,20 @@ function resumeMini(){
   const tried = S.mini && Array.isArray(S.mini.tried) ? S.mini.tried.slice(0, -1) : [];
   S.status = "tie"; S.mini = null; render();
   setTimeout(() => { if (S && S.status === "tie") startMini(tried); }, 7000);
+}
+function saveSetup(){ ls.set("vgm.setup", JSON.stringify(setup)); }
+function profChanged(){
+  if (role === "host" && voters[myId]) { voters[myId].av = myAv; voters[myId].col = myCol; broadcast(); renderLive(); }
+  else if (role === "guest") send({t: "prof", nick: nick || "Jugador", av: myAv, col: myCol});
+  if (!role) { const nk = $("#nick"); const keep = nk ? nk.value : null; render(); const n2 = $("#nick"); if (n2 && keep !== null) n2.value = keep; }
+}
+function profileHTML(){
+  return `<div class="prof">
+    ${avHTML({av: myAv, col: myCol}, "lg")}
+    <label class="field" style="margin:0"><span>Tu nombre</span><input class="inp" id="nick" maxlength="20" placeholder="Por ejemplo: Fitxi" value="${esc(nick)}" autocomplete="off"></label>
+    <div class="grid" role="group" aria-label="Icono">${AVATARS.map((a, i) => `<button type="button" data-act="av" data-v="${i}" aria-pressed="${i === myAv}" aria-label="Icono ${i+1}">${a}</button>`).join("")}</div>
+    <div class="cols" role="group" aria-label="Color">${COLORS.map((c, i) => `<button type="button" data-act="col" data-v="${i}" aria-pressed="${i === myCol}" style="background:${c}" aria-label="Color ${i+1}"></button>`).join("")}</div>
+  </div>`;
 }
 function saveNick(){ const i = $("#nick"); if (i) { nick = cleanNick(i.value); ls.set("vgm.nick", nick); } }
 
